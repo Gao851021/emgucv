@@ -2249,20 +2249,25 @@ IF(WIN32 AND WITH_CUDA)
   SET(CVEXTERN_CUDA_DEPENDENCY_DLLS)
   
   IF ((${npp_major} GREATER 5) OR ((${npp_major} STREQUAL "5") AND (${npp_minor} GREATER 0)))
+	IF ((${npp_major} GREATER 10) OR ((${npp_major} STREQUAL "10") AND (${npp_minor} GREATER 0)))
+	  SET(NPP_POSTFIX ${npp_major})
+	ELSE()
+	  SET(NPP_POSTFIX ${npp_major}${npp_minor})
+	ENDIF()
 	SET(CUDA_NPP_DLLS 
-	  "${CUDA_NPP_LIBRARY_ROOT_DIR}/bin/nppc${CUDA_POSTFIX}_${npp_major}${npp_minor}.dll"
-      "${CUDA_NPP_LIBRARY_ROOT_DIR}/bin/nppi${CUDA_POSTFIX}_${npp_major}${npp_minor}.dll"
-	  "${CUDA_NPP_LIBRARY_ROOT_DIR}/bin/nppial${CUDA_POSTFIX}_${npp_major}${npp_minor}.dll"
-	  "${CUDA_NPP_LIBRARY_ROOT_DIR}/bin/nppicc${CUDA_POSTFIX}_${npp_major}${npp_minor}.dll"
-	  "${CUDA_NPP_LIBRARY_ROOT_DIR}/bin/nppicom${CUDA_POSTFIX}_${npp_major}${npp_minor}.dll"
-	  "${CUDA_NPP_LIBRARY_ROOT_DIR}/bin/nppidei${CUDA_POSTFIX}_${npp_major}${npp_minor}.dll"
-	  "${CUDA_NPP_LIBRARY_ROOT_DIR}/bin/nppif${CUDA_POSTFIX}_${npp_major}${npp_minor}.dll"
-	  "${CUDA_NPP_LIBRARY_ROOT_DIR}/bin/nppig${CUDA_POSTFIX}_${npp_major}${npp_minor}.dll"
-	  "${CUDA_NPP_LIBRARY_ROOT_DIR}/bin/nppim${CUDA_POSTFIX}_${npp_major}${npp_minor}.dll"
-	  "${CUDA_NPP_LIBRARY_ROOT_DIR}/bin/nppist${CUDA_POSTFIX}_${npp_major}${npp_minor}.dll"
-	  "${CUDA_NPP_LIBRARY_ROOT_DIR}/bin/nppisu${CUDA_POSTFIX}_${npp_major}${npp_minor}.dll"
-	  "${CUDA_NPP_LIBRARY_ROOT_DIR}/bin/nppitc${CUDA_POSTFIX}_${npp_major}${npp_minor}.dll"
-      "${CUDA_NPP_LIBRARY_ROOT_DIR}/bin/npps${CUDA_POSTFIX}_${npp_major}${npp_minor}.dll")
+	  "${CUDA_NPP_LIBRARY_ROOT_DIR}/bin/nppc${CUDA_POSTFIX}_${NPP_POSTFIX}.dll"
+      "${CUDA_NPP_LIBRARY_ROOT_DIR}/bin/nppi${CUDA_POSTFIX}_${NPP_POSTFIX}.dll"
+	  "${CUDA_NPP_LIBRARY_ROOT_DIR}/bin/nppial${CUDA_POSTFIX}_${NPP_POSTFIX}.dll"
+	  "${CUDA_NPP_LIBRARY_ROOT_DIR}/bin/nppicc${CUDA_POSTFIX}_${NPP_POSTFIX}.dll"
+	  "${CUDA_NPP_LIBRARY_ROOT_DIR}/bin/nppicom${CUDA_POSTFIX}_${NPP_POSTFIX}.dll"
+	  "${CUDA_NPP_LIBRARY_ROOT_DIR}/bin/nppidei${CUDA_POSTFIX}_${NPP_POSTFIX}.dll"
+	  "${CUDA_NPP_LIBRARY_ROOT_DIR}/bin/nppif${CUDA_POSTFIX}_${NPP_POSTFIX}.dll"
+	  "${CUDA_NPP_LIBRARY_ROOT_DIR}/bin/nppig${CUDA_POSTFIX}_${NPP_POSTFIX}.dll"
+	  "${CUDA_NPP_LIBRARY_ROOT_DIR}/bin/nppim${CUDA_POSTFIX}_${NPP_POSTFIX}.dll"
+	  "${CUDA_NPP_LIBRARY_ROOT_DIR}/bin/nppist${CUDA_POSTFIX}_${NPP_POSTFIX}.dll"
+	  "${CUDA_NPP_LIBRARY_ROOT_DIR}/bin/nppisu${CUDA_POSTFIX}_${NPP_POSTFIX}.dll"
+	  "${CUDA_NPP_LIBRARY_ROOT_DIR}/bin/nppitc${CUDA_POSTFIX}_${NPP_POSTFIX}.dll"
+      "${CUDA_NPP_LIBRARY_ROOT_DIR}/bin/npps${CUDA_POSTFIX}_${NPP_POSTFIX}.dll")
 	FOREACH(CUDA_NPP_DLL ${CUDA_NPP_DLLS})
 	  IF(EXISTS "${CUDA_NPP_DLL}")
 		LIST(APPEND CVEXTERN_CUDA_DEPENDENCY_DLLS "${CUDA_NPP_DLL}")
@@ -2288,13 +2293,14 @@ IF(WIN32 AND WITH_CUDA)
     #ENDIF()
     
     IF(WITH_CUFFT)
-      LIST(APPEND CVEXTERN_CUDA_DEPENDENCY_DLLS "${CUDA_TOOLKIT_ROOT_DIR}/bin/cufft${CUDA_POSTFIX}_${npp_major}${npp_minor}.dll")
-      #LIST(APPEND CVEXTERN_DEPENDENCY_DLL_NAMES cufft${CUDA_POSTFIX}_${npp_major}${npp_minor}) 
+	    LIST(APPEND CVEXTERN_CUDA_DEPENDENCY_DLLS "${CUDA_TOOLKIT_ROOT_DIR}/bin/cufft${CUDA_POSTFIX}_${NPP_POSTFIX}.dll")
     ENDIF()
     
     IF(WITH_CUBLAS)
-      LIST(APPEND CVEXTERN_CUDA_DEPENDENCY_DLLS "${CUDA_TOOLKIT_ROOT_DIR}/bin/cublas${CUDA_POSTFIX}_${npp_major}${npp_minor}.dll")
-      #LIST(APPEND CVEXTERN_DEPENDENCY_DLL_NAMES cublas${CUDA_POSTFIX}_${npp_major}${npp_minor})
+	  IF ((${npp_major} GREATER 10) OR ((${npp_major} STREQUAL "10") AND (${npp_minor} GREATER 0)))
+        LIST(APPEND CVEXTERN_CUDA_DEPENDENCY_DLLS "${CUDA_TOOLKIT_ROOT_DIR}/bin/cublasLt${CUDA_POSTFIX}_${NPP_POSTFIX}.dll")
+	  ENDIF()
+	  LIST(APPEND CVEXTERN_CUDA_DEPENDENCY_DLLS "${CUDA_TOOLKIT_ROOT_DIR}/bin/cublas${CUDA_POSTFIX}_${NPP_POSTFIX}.dll")
     ENDIF()  
   ELSE()  
     LIST(APPEND CVEXTERN_CUDA_DEPENDENCY_DLLS 
@@ -2306,6 +2312,7 @@ IF(WIN32 AND WITH_CUDA)
     #  cudart${CUDA_POSTFIX}_${npp_major}${npp_minor}_${npp_build})
     
     IF(WITH_CUFFT)
+	  
       LIST(APPEND CVEXTERN_CUDA_DEPENDENCY_DLLS "${CUDA_TOOLKIT_ROOT_DIR}/bin/cufft${CUDA_POSTFIX}_${npp_major}${npp_minor}_${npp_build}.dll")
       #LIST(APPEND CVEXTERN_DEPENDENCY_DLL_NAMES cufft${CUDA_POSTFIX}_${npp_major}${npp_minor}_${npp_build}) 
     ENDIF()
@@ -2323,8 +2330,8 @@ IF(WIN32 AND WITH_CUDA)
 	set(FREETYPE_OUTPUT_NAME "freetype")
 	set(HARFBUZZ_OUTPUT_NAME "harfbuzz")
 	IF(MSVC_IDE)
-	  SET(FREETYPE_OUTPUT_FILE_PATH "${CMAKE_BINARY_DIR}/freetype2/Release/${FREETYPE_OUTPUT_NAME}.dll")
-	  SET(HARFBUZZ_OUTPUT_FILE_PATH "${CMAKE_BINARY_DIR}/harfbuzz/Release/${HARFBUZZ_OUTPUT_NAME}.dll")
+	  SET(FREETYPE_OUTPUT_FILE_PATH "${CMAKE_BINARY_DIR}/freetype2/$(ConfigurationName)/${FREETYPE_OUTPUT_NAME}.dll")
+	  SET(HARFBUZZ_OUTPUT_FILE_PATH "${CMAKE_BINARY_DIR}/harfbuzz/$(ConfigurationName)/${HARFBUZZ_OUTPUT_NAME}.dll")
 	ELSEIF(MSVC AND (CMAKE_GENERATOR MATCHES "Visual"))
 	  SET(FREETYPE_OUTPUT_FILE_PATH "${CMAKE_BINARY_DIR}/freetype2/${CMAKE_BUILD_TYPE}/${FREETYPE_OUTPUT_NAME}.dll")
 	  SET(HARFBUZZ_OUTPUT_FILE_PATH "${CMAKE_BINARY_DIR}/harfbuzz/${CMAKE_BUILD_TYPE}/${HARFBUZZ_OUTPUT_NAME}.dll")
@@ -2376,9 +2383,14 @@ ENDIF()
 ############################### xfeatures2d END ################################
 
 IF(DEFINED CVEXTERN_DEPENDENCY_DLLS)
+  FOREACH(CVEXTERN_DEPENDENCY_DLL ${CVEXTERN_DEPENDENCY_DLLS})
+	STRING(REPLACE "$(ConfigurationName)" "release" CVEXTERN_DEPENDENCY_DLL ${CVEXTERN_DEPENDENCY_DLL})
+    LIST(APPEND CVEXTERN_DEPENDENCY_DLLS_RELEASE ${CVEXTERN_DEPENDENCY_DLL})
+  ENDFOREACH()
+  #MESSAGE(STATUS "==================> CVEXTERN_DEPENDENCY_DLLS_RELEASE: ${CVEXTERN_DEPENDENCY_DLLS_RELEASE}")
   INSTALL(
     FILES 
-    ${CVEXTERN_DEPENDENCY_DLLS}
+    ${CVEXTERN_DEPENDENCY_DLLS_RELEASE}
     DESTINATION libs${UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER}
     COMPONENT libs)
 ENDIF()
