@@ -141,6 +141,25 @@ CVAPI(void) cveSubdiv2DGetVoronoiFacetList(cv::Subdiv2D* subdiv, std::vector<int
 CVAPI(int) cveSubdiv2DFindNearest(cv::Subdiv2D* subdiv, CvPoint2D32f* pt,  CvPoint2D32f* nearestPt);
 CVAPI(int) cveSubdiv2DLocate(cv::Subdiv2D* subdiv, CvPoint2D32f* pt, int* edge, int* vertex);
 
+//LineIterator
+CVAPI(cv::LineIterator*) cveLineIteratorCreate(
+	cv::Mat* img, 
+	CvPoint* pt1, 
+	CvPoint* pt2,
+	int connectivity, 
+	bool leftToRight);
+CVAPI(uchar*) cveLineIteratorGetDataPointer(cv::LineIterator* iterator);
+CVAPI(void) cveLineIteratorPos(cv::LineIterator* iterator, CvPoint* pos);
+CVAPI(void) cveLineIteratorMoveNext(cv::LineIterator* iterator);
+CVAPI(void) cveLineIteratorRelease(cv::LineIterator** iterator);
+CVAPI(void) cveLineIteratorSampleLine(
+	cv::Mat* img,
+	CvPoint* pt1,
+	CvPoint* pt2,
+	int connectivity,
+	bool leftToRight, 
+	cv::Mat* result);
+
 //Drawing
 CVAPI(void) cveLine(cv::_InputOutputArray* img, CvPoint* p1, CvPoint* p2, CvScalar* color, int thickness, int lineType, int shift);
 
@@ -168,7 +187,8 @@ CVAPI(void) cveEllipse(cv::_InputOutputArray* img, CvPoint* center, CvSize* axes
 
 
 //color map
-CVAPI(void) cveApplyColorMap(cv::_InputArray* src, cv::_OutputArray* dst, int colorMap);
+CVAPI(void) cveApplyColorMap1(cv::_InputArray* src, cv::_OutputArray* dst, int colorMap);
+CVAPI(void) cveApplyColorMap2(cv::_InputArray* src, cv::_OutputArray* dst, cv::_InputArray userColorMap);
 
 CVAPI(void) cveDistanceTransform(cv::_InputArray* src, cv::_OutputArray* dst, cv::_OutputArray* labels, int distanceType, int maskSize, int labelType);
 

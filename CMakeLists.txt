@@ -201,7 +201,12 @@ IF (WIN32)
     IF(IS_ARM GREATER -1)
       SET(EMGUCV_ARCH arm)
     ELSE()
-      SET(EMGUCV_ARCH win32)
+	  STRING(FIND "${CMAKE_GENERATOR_PLATFORM}" "ARM" IS_ARM)
+	  IF(IS_ARM GREATER -1)
+        SET(EMGUCV_ARCH arm)
+	  ELSE()
+        SET(EMGUCV_ARCH win32)
+	  ENDIF()
     ENDIF()
     #ELSE()
     #  SET(EMGUCV_ARCH win32)
@@ -694,6 +699,7 @@ SET (OPENCV_MODULE_NAME_CANDIDATES
   hfs
   quality
   stereo
+  surface_matching
   )
 
 FOREACH(OPENCV_MODULE_NAME ${OPENCV_MODULE_NAME_CANDIDATES})
@@ -789,11 +795,18 @@ IF(HAVE_ANDROID_ALL_ARCH AND WIN32)
 	SET(EMGUCV_ANDROID_NUGET_ID "${EMGUCV_NUGET_ID_BASE}-Android")
 ENDIF()
 
+IF(HAVE_IOS AND WIN32)
+	SET(EMGUCV_IOS_NUGET_ID "${EMGUCV_NUGET_ID_BASE}-iOS")
+ENDIF()
+
 IF ("${LICENSE_TYPE}" STREQUAL "Commercial")
 	MESSAGE(STATUS "Configuring nuget package for Commercial release")
 	SET(EMGUCV_NUGET_ID "${EMGUCV_NUGET_ID}-CR")
 	IF(HAVE_ANDROID_ALL_ARCH AND WIN32)
 	  SET(EMGUCV_ANDROID_NUGET_ID "${EMGUCV_ANDROID_NUGET_ID}-CR")
+	ENDIF()
+	IF(HAVE_IOS AND WIN32)
+	  SET(EMGUCV_IOS_NUGET_ID "${EMGUCV_IOS_NUGET_ID}-CR")
 	ENDIF()
 ELSEIF()
 	MESSAGE(STATUS "Configuring nuget package for Open Source release")
@@ -860,7 +873,7 @@ IF(WITH_CUDA)
 	#MESSAGE(STATUS "<<<<<<<<<<<<<<<< npp_build: ${npp_build} >>>>>>>>>>>>>>>>>>>>>> ")
 	SET(CUDA_VERSION_NUMERIC_ONLY "${npp_major}${npp_minor}")
 	
-	IF("${npp_major}${npp_minor}" STREQUAL "101") 
+	IF((${npp_major} GREATER 10) OR (("${npp_major}" STREQUAL "10") AND (${npp_minor} GREATER 0)))
 		SET(CUFFT_POSTFIX "${npp_major}")
 	ELSE()
 		SET(CUFFT_POSTFIX "${npp_major}${npp_minor}")
@@ -885,6 +898,18 @@ IF(HAVE_ANDROID_ALL_ARCH AND WIN32)
 	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Android.Package.nuspec.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/Android/Package.nuspec)
 ENDIF()
 
+IF(HAVE_IOS AND WIN32)
+	SET(EMGUCV_IOS_NUGET_TITLE "EMGU CV for iOS")	
+	SET(EMGUCV_IOS_NUGET_FILE_LIST " 
+    <file src=\"..\\..\\..\\libs\\Emgu.CV.World.IOS.dll\" target=\"lib\\Xamarin.iOS10\" />
+	<file src=\"..\\..\\..\\libs\\Emgu.CV.World.IOS.XML\" target=\"lib\\Xamarin.iOS10\" />")
+	SET(EMGUCV_IOS_NUGET_FILE_LIST "${EMGUCV_IOS_NUGET_FILE_LIST} 
+	<file src=\"Emgu.CV.IOS.targets\" target=\"build\\${EMGUCV_IOS_NUGET_ID}.targets\" />
+	<file src=\"..\\..\\..\\${LICENSE_FILE_NAME}\" target=\"\" />")
+	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/iOS.Package.nuspec.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/iOS/Package.nuspec)
+ENDIF()
+
+
 SET(EMGUCV_NUGET_SUMMARY "Emgu CV is a cross platform .Net wrapper to the OpenCV image processing library.")
 
 IF ("${LICENSE_TYPE}" STREQUAL "Commercial")
@@ -900,9 +925,9 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Package.nuspec.in ${CMAKE_CURRE
 
 #CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/component.yaml.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/xamarin/emgucv_v3/component/component.yaml)
 
-CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Example.Android.AndroidManifest.xml.in ${CMAKE_CURRENT_SOURCE_DIR}/Emgu.CV.Example/Android/Properties/AndroidManifest.xml)
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Example.Android.AndroidManifest.xml.in ${CMAKE_CURRENT_SOURCE_DIR}/Emgu.CV.Example/Android/Properties/AndroidManifest.xml @ONLY)
 
-CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/XamarinForms.Android.AndroidManifest.xml.in ${CMAKE_CURRENT_SOURCE_DIR}/Emgu.CV.Example/XamarinForms/Android/Properties/AndroidManifest.xml)
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/XamarinForms.Android.AndroidManifest.xml.in ${CMAKE_CURRENT_SOURCE_DIR}/Emgu.CV.Example/XamarinForms/Android/Properties/AndroidManifest.xml @ONLY)
 
 # ----------------------------------------------------------------------------
 #  Generate readme file for Emgu CV project
@@ -1022,7 +1047,7 @@ if(WIN32 AND WITH_FFMPEG)
   #STRING(LENGTH "${OPENCV_CORE_OUTPUT_NAME}" temp)
   #MATH(EXPR temp "${temp}-3")
   #STRING(SUBSTRING ${OPENCV_CORE_OUTPUT_NAME} ${temp} -1 OPENCV_DLLVERSION)
-  set(OPENCV_FFMPEG_OUTPUT_NAME "opencv_ffmpeg${OPENCV_VERSION_MAJOR}${OPENCV_VERSION_MINOR}${OPENCV_VERSION_PATCH}${FFMPEG_SUFFIX}")
+  set(OPENCV_FFMPEG_OUTPUT_NAME "opencv_videoio_ffmpeg${OPENCV_VERSION_MAJOR}${OPENCV_VERSION_MINOR}${OPENCV_VERSION_PATCH}${FFMPEG_SUFFIX}")
   #set(OPENCV_FFMPEG_OUTPUT_NAME "opencv_ffmpeg${FFMPEG_SUFFIX}")
   MESSAGE(STATUS "OPENCV_FFMPEG_OUTPUT_NAME: ${OPENCV_FFMPEG_OUTPUT_NAME}")
   LIST(APPEND OPENCV_LIBRARY_OUTPUT_NAMES ${OPENCV_FFMPEG_OUTPUT_NAME})

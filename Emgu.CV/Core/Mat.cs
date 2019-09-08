@@ -34,7 +34,7 @@ namespace Emgu.CV
     [Serializable]
     [DebuggerTypeProxy(typeof(Mat.DebuggerProxy))]
 #endif
-    public partial class Mat : MatDataAllocator, IImage, IEquatable<Mat>
+    public partial class Mat : MatDataAllocator, IEquatable<Mat>, IInputOutputArray
 #if !(NETFX_CORE || NETSTANDARD1_4)
 , ISerializable
 #endif
@@ -283,11 +283,11 @@ namespace Emgu.CV
                     if (IsEmpty)
                     {
 #if __IOS__
-                  //try again to load with UIImage
-                  using (UIImage tmp = UIImage.FromFile(fileName))
-                  {
-                     CvInvoke.ConvertCGImageToArray(tmp.CGImage, this);
-                  }
+                      //try again to load with UIImage
+                      using (UIImage tmp = UIImage.FromFile(fileName))
+                      {
+                         CvInvoke.ConvertCGImageToArray(tmp.CGImage, this);
+                      }
 #else
                         throw new ArgumentException(String.Format("Unable to decode file: {0}", fileName));
 #endif
@@ -815,8 +815,7 @@ namespace Emgu.CV
             }
         }
 
-#if __ANDROID__ || __UNIFIED__
-#elif !(NETFX_CORE || NETSTANDARD1_4 || UNITY_ANDROID || UNITY_IOS || UNITY_STANDALONE || UNITY_METRO || UNITY_EDITOR)
+#if !(NETFX_CORE || NETSTANDARD1_4 || UNITY_ANDROID || UNITY_IOS || UNITY_STANDALONE || UNITY_METRO || UNITY_EDITOR || __ANDROID__ || __UNIFIED__)
         /// <summary>
         /// The Get property provide a more efficient way to convert gray scale Mat of Byte, 3 channel Mat of Byte (assuming BGR color space) or 4 channel Mat of Byte (assuming Bgra color space) into Bitmap
         /// such that the image data is <b>shared</b> with Bitmap. 
@@ -1173,7 +1172,7 @@ namespace Emgu.CV
         /// <summary>
         /// Make a clone of the current Mat
         /// </summary>
-        /// <returns>A clone fo the current Mat</returns>
+        /// <returns>A clone of the current Mat</returns>
         public Mat Clone()
         {
             Mat c = new Mat();
@@ -1203,29 +1202,6 @@ namespace Emgu.CV
             }
             return mats;
         }
-
-        /// <summary> 
-        /// Split current Image into an array of gray scale images where each element 
-        /// in the array represent a single color channel of the original image
-        /// </summary>
-        /// <returns> 
-        /// An array of gray scale images where each element in the array represent a single color channel of the original image 
-        /// </returns>
-        IImage[] IImage.Split()
-        {
-            Mat[] tmp = this.Split();
-            IImage[] result = new IImage[tmp.Length];
-            for (int i = 0; i < result.Length; i++)
-                result[i] = tmp[i];
-            return result;
-        }
-
-#if !NETSTANDARD1_4
-        object ICloneable.Clone()
-        {
-            return this.Clone();
-        }
-#endif
 
         /// <summary>
         /// Compares two Mats and check if they are equal

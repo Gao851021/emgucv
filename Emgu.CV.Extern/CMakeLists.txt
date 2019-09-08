@@ -948,6 +948,27 @@ IF(HAVE_opencv_objdetect)
 ENDIF()
 ############################### objdetect code gen END ################################
 
+############################### imgproc code gen START ##############################
+IF(HAVE_opencv_imgproc)
+  CREATE_OCV_CLASS_PROPERTY( 
+    "imgproc/LineIterator_property" 
+    "${CMAKE_CURRENT_SOURCE_DIR}/../Emgu.CV/Imgproc/LineIterator.g.cs"
+    "cv::LineIterator" 
+    "LineIterator" 
+    "count" 
+    "int" 
+    "element"
+    "Count" 
+    "int"
+    "The total number of pixels in the line"
+    "Emgu.CV"
+    "CvInvoke"
+    "LineIterator"
+	""
+    "#include \"imgproc_c.h\"")
+ENDIF()
+############################### features2d code gen END ################################
+
 ############################### features2d code gen START ##############################
 IF(HAVE_opencv_features2d)
   CREATE_OCV_CLASS_PROPERTY( 
@@ -1264,13 +1285,12 @@ IF(HAVE_opencv_videoio)
     "${CMAKE_CURRENT_SOURCE_DIR}/../Emgu.CV/Videoio/VideoCapture.g.cs"
     "cv::VideoCapture" 
     "VideoCapture" 
-    "isOpened;BackendName" 
-    "bool;cv::String" 
-    "val;propR"
-    "IsOpened;BackendName" 
-    "bool;String"
-    "True if the camera is opened;
-	The Capture Backend"
+    "isOpened" 
+    "bool" 
+    "val"
+    "IsOpened" 
+    "bool"
+    "True if the camera is opened"
     "Emgu.CV"
     "CvInvoke"
     "VideoCapture"
@@ -2195,7 +2215,7 @@ if(WIN32 AND WITH_FFMPEG)
   if(TARGET_ARCH_64)
     set(FFMPEG_SUFFIX _64)
   endif()
-  set(OPENCV_FFMPEG_OUTPUT_NAME "opencv_ffmpeg${OPENCV_VERSION_MAJOR}${OPENCV_VERSION_MINOR}${OPENCV_VERSION_PATCH}${FFMPEG_SUFFIX}")
+  set(OPENCV_FFMPEG_OUTPUT_NAME "opencv_videoio_ffmpeg${OPENCV_VERSION_MAJOR}${OPENCV_VERSION_MINOR}${OPENCV_VERSION_PATCH}${FFMPEG_SUFFIX}")
   IF(MSVC_IDE)
 	SET(OPENCV_FFMPEG_OUTPUT_FILE_PATH "${EXECUTABLE_OUTPUT_PATH}/Release/${OPENCV_FFMPEG_OUTPUT_NAME}.dll")
   ELSEIF(MSVC AND (CMAKE_GENERATOR MATCHES "Visual"))
@@ -2254,7 +2274,7 @@ IF(WIN32 AND WITH_CUDA)
   SET(CVEXTERN_CUDA_DEPENDENCY_DLLS)
   
   IF ((${npp_major} GREATER 5) OR ((${npp_major} STREQUAL "5") AND (${npp_minor} GREATER 0)))
-    IF("${npp_major}${npp_minor}" STREQUAL "101") 
+    IF(((${npp_major} GREATER 10) OR (("${npp_major}" STREQUAL "10") AND (${npp_minor} GREATER 0)))) 
 	  SET(NPP_POSTFIX "${npp_major}")
 	ELSE()
 	  SET(NPP_POSTFIX "${npp_major}${npp_minor}")

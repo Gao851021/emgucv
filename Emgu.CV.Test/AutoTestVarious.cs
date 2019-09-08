@@ -1429,6 +1429,16 @@ namespace Emgu.CV.Test
                 labels[i] = i;
             }
 
+            Mat[] images2 = new Mat[20];
+            int[] labels2 = new int[20];
+            for (int i = 0; i < images2.Length; i++)
+            {
+                images2[i] = new Mat(new Size(200, 200), DepthType.Cv8U, 1);
+                CvInvoke.Randu(images2[i], new MCvScalar(0), new MCvScalar(255));
+
+                labels2[i] = i + labels.Length;
+            }
+
             Mat sample = new Mat(new Size(200, 200), DepthType.Cv8U, 1);
             CvInvoke.Randu(sample, new MCvScalar(0), new MCvScalar(255));
             
@@ -1460,6 +1470,7 @@ namespace Emgu.CV.Test
 
             LBPHFaceRecognizer lbph = new LBPHFaceRecognizer(1, 8, 8, 8, double.MaxValue);
             lbph.Train(images, labels);
+            lbph.Update(images2, labels2);
             for (int i = 0; i < images.Length; i++)
             {
                 EmguAssert.IsTrue(lbph.Predict(images[i]).Label == i);
@@ -2182,6 +2193,40 @@ namespace Emgu.CV.Test
               //ImageViewer.Show(mask);
            }
         }*/
+
+        [Test]
+        public void TestLineIterator()
+        {
+            Mat img = EmguAssert.LoadMat("pedestrian.png");
+
+
+            Mat line = LineIterator.SampleLine(img, new Point(0, 0), new Point(img.Width, img.Height));
+            byte[,,] pixelData = line.GetData(true) as byte[,,];
+
+            LineIterator li = new LineIterator(img, new Point(0, 0), new Point(img.Width, img.Height), 8, false);
+            int count = li.Count;
+            List<Point> points = new List<Point>();
+            List<byte[]> sample = new List<byte[]>();
+            for (int i = 0; i < count; i++)
+            {
+                points.Add(li.Pos);
+                byte[] data = li.Data as byte[];
+                sample.Add(data);
+
+                //invert the pixel
+                for (int j = 0; j < data.Length; j++)
+                {
+                    data[j] = (byte) (255 - data[j]);
+                }
+
+                li.Data = data;
+                li.MoveNext();
+            }
+
+            //CvInvoke.Imshow("hello", img);
+            //CvInvoke.WaitKey();
+        }
+
 
 #if !NETFX_CORE
         [Test]
@@ -3511,6 +3556,8 @@ namespace Emgu.CV.Test
 
             CvInvoke.Imwrite("rgb_ssd_result.jpg", img);
 
+            String netText = net.Dump();
+            net.DumpToFile("rgb_ssd.dot");
         }
 
         [Test]

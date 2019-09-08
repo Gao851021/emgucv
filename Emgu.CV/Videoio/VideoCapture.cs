@@ -176,7 +176,7 @@ namespace Emgu.CV
             /// <summary>
             /// Built-in OpenCV MotionJPEG codec
             /// </summary>
-            OopencvMjpeg = 2200,
+            OpencvMjpeg = 2200,
             /// <summary>
             /// Intel MediaSDK
             /// </summary>
@@ -555,6 +555,21 @@ namespace Emgu.CV
             CvInvoke.cveVideoCaptureReadToMat(Ptr, m);
         }
 
+        /// <summary>
+        /// The name of the backend used by this VideoCapture
+        /// </summary>
+        public String BackendName
+        {
+            get
+            {
+                using (CvString s = new CvString())
+                {
+                    CvInvoke.cveVideoCaptureGetBackendName(Ptr, s);
+                    return s.ToString();
+                }
+            }
+        }
+
 #region implement ICapture
         /// <summary> 
         /// Capture a Bgr image frame
@@ -750,6 +765,9 @@ namespace Emgu.CV
         [DllImport(ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]
         [return: MarshalAs(CvInvoke.BoolToIntMarshalType)]
         internal static extern bool cveVideoCaptureSet(IntPtr capture, CvEnum.CapProp propertyId, double value);
+
+        [DllImport(ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]
+        internal static extern void cveVideoCaptureGetBackendName(IntPtr capture, IntPtr backendName);
 
         [DllImport(ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]
         internal static extern void cveGetBackendName(int api, IntPtr name);
