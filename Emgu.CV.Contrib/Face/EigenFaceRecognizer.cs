@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
 using System;
@@ -34,7 +34,11 @@ namespace Emgu.CV.Face
         protected override void DisposeObject()
         {
             if (_sharedPtr == IntPtr.Zero)
+            {
                 FaceInvoke.cveEigenFaceRecognizerRelease(ref _sharedPtr);
+                _ptr = IntPtr.Zero;
+            }
+
             base.DisposeObject();
         }
 

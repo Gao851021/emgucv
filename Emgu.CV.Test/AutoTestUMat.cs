@@ -1,5 +1,5 @@
 ﻿//----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -45,7 +45,7 @@ namespace Emgu.CV.Test
             using (UMat m1 = new UMat())
             {
                m1.Create(10, 12, CvEnum.DepthType.Cv8U, 1);
-               EmguAssert.IsTrue(m1.Data == null);
+               EmguAssert.IsTrue(m1.GetData() != null);
             }
             CvInvoke.UseOpenCL = false;
             using(UMat m2 = new UMat())

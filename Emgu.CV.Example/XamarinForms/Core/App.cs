@@ -1,13 +1,18 @@
 ﻿//----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
-
+using Emgu.CV.CvEnum;
+using Emgu.CV.Dnn;
 using Xamarin.Forms;
+using Emgu.CV.Structure;
+using Emgu.Util.TypeEnum;
 
 namespace Emgu.CV.XamarinForms
 {
@@ -22,13 +27,16 @@ namespace Emgu.CV.XamarinForms
             planarSubdivisionButton.Text = "Planar Subdivision";
 
             Button faceDetectionButton = new Button();
-            faceDetectionButton.Text = "Face Detection";
+            faceDetectionButton.Text = "Face Detection (CascadeClassifier)";
 
             Button faceLandmarkDetectionButton = new Button();
-            faceLandmarkDetectionButton.Text = "Face Landmark Detection";
+            faceLandmarkDetectionButton.Text = "Face Landmark Detection (DNN Module)";
 
             Button featureDetectionButton = new Button();
             featureDetectionButton.Text = "Feature Matching";
+
+            Button shapeDetectionButton = new Button();
+            shapeDetectionButton.Text = "Shape Detection";
 
             Button pedestrianDetectionButton = new Button();
             pedestrianDetectionButton.Text = "Pedestrian Detection";
@@ -36,8 +44,17 @@ namespace Emgu.CV.XamarinForms
             Button ocrButton = new Button();
             ocrButton.Text = "OCR";
 
-            Button dnnButton = new Button();
-            dnnButton.Text = "DNN";
+            Button maskRcnnButton = new Button();
+            maskRcnnButton.Text = "Mask RCNN (DNN module)";
+
+            Button yoloButton = new Button();
+            yoloButton.Text = "Yolo (DNN module)";
+
+            Button stopSignDetectionButton = new Button();
+            stopSignDetectionButton.Text = "Stop Sign Detection (DNN module)";
+
+            Button licensePlateRecognitionButton = new Button();
+            licensePlateRecognitionButton.Text = "License Plate Recognition";
 
             List<View> buttonList = new List<View>()
             {
@@ -46,63 +63,89 @@ namespace Emgu.CV.XamarinForms
                 faceDetectionButton,
                 faceLandmarkDetectionButton,
                 featureDetectionButton,
+                shapeDetectionButton,
                 pedestrianDetectionButton,
                 ocrButton,
-                dnnButton
+                maskRcnnButton,
+                stopSignDetectionButton,
+                yoloButton,
+                licensePlateRecognitionButton
             };
 
-#if !(NETFX_CORE || __ANDROID__ || __IOS__ || __MACOS__)
-            //Button viz3dButton = new Button();
-            //viz3dButton.Text = "Viz3D";
-            //buttonList.Add(viz3dButton);
-            //viz3dButton.Clicked += (sender, args) =>
-            //{
-            //    MainPage.Navigation.PushAsync(new Viz3dPage());
-            //};
-#endif
+            var openCVConfigDict = CvInvoke.ConfigDict;
+            bool haveViz = (openCVConfigDict["HAVE_OPENCV_VIZ"] != 0);
+            bool haveDNN = (openCVConfigDict["HAVE_OPENCV_DNN"] != 0);
+            bool hasInferenceEngine = false;
+            if (haveDNN)
+            {
+                var dnnBackends = DnnInvoke.AvailableBackends;
+                hasInferenceEngine = Array.Exists(dnnBackends, dnnBackend =>
+                    (dnnBackend.Backend == Dnn.Backend.InferenceEngine
+                     || dnnBackend.Backend == Dnn.Backend.InferenceEngineNgraph
+                     || dnnBackend.Backend == Dnn.Backend.InferenceEngineNnBuilder2019));
+            }
+
+            if (haveViz)
+            {
+                Button viz3dButton = new Button();
+                viz3dButton.Text = "Simple 3D reconstruction";
+
+                buttonList.Add(viz3dButton);
+
+                viz3dButton.Clicked += (sender, args) =>
+                {
+                    Mat left = CvInvoke.Imread("imL.png", ImreadModes.Color);
+                    Mat right = CvInvoke.Imread("imR.png", ImreadModes.Color);
+                    Viz3d v = Simple3DReconstruct.GetViz3d(left, right);
+                    v.Spin();
+                };
+            }
 
             StackLayout buttonsLayout = new StackLayout
             {
                 VerticalOptions = LayoutOptions.Start,
             };
-                
+
             foreach (View b in buttonList)
                 buttonsLayout.Children.Add(b);
 
             // The root page of your application
             ContentPage page =
-              new ContentPage()
-              {
-                  Content = new ScrollView() { 
-                      Content = buttonsLayout,
-                      
-                      }
-              };
+                new ContentPage()
+                {
+                    Content = new ScrollView()
+                    {
+                        Content = buttonsLayout,
+                    }
+                };
 
-#if NETFX_CORE
-		    String aboutIcon = "questionmark.png";
-#else
             String aboutIcon = null;
-#endif
+            /*
+            String aboutIcon;
+            if (Emgu.Util.Platform.OperationSystem == Emgu.Util.Platform.OS.IOS)
+            {
+                aboutIcon = null;
+            }
+            else if (Emgu.Util.Platform.ClrType == Emgu.Util.Platform.Clr.NetFxCore)
+                aboutIcon = null; 
+            else
+                aboutIcon = "questionmark.png";*/
 
             MainPage =
-             new NavigationPage(
-                page
-             );
+                new NavigationPage(
+                    page
+                );
 
             ToolbarItem aboutItem = new ToolbarItem("About", aboutIcon,
-               () =>
-               {
-                   MainPage.Navigation.PushAsync(new AboutPage());
-                   //page.DisplayAlert("Emgu CV Examples", "App version: ...", "Ok");
-               }
+                () =>
+                {
+                    MainPage.Navigation.PushAsync(new AboutPage());
+                    //page.DisplayAlert("Emgu CV Examples", "App version: ...", "Ok");
+                }
             );
             page.ToolbarItems.Add(aboutItem);
 
-            helloWorldButton.Clicked += (sender, args) =>
-            {
-                MainPage.Navigation.PushAsync(new HelloWorldPage());
-            };
+            helloWorldButton.Clicked += (sender, args) => { MainPage.Navigation.PushAsync(new HelloWorldPage()); };
 
             planarSubdivisionButton.Clicked += (sender, args) =>
             {
@@ -112,6 +155,11 @@ namespace Emgu.CV.XamarinForms
             faceDetectionButton.Clicked += (sender, args) =>
             {
                 MainPage.Navigation.PushAsync(new FaceDetectionPage());
+            };
+
+            shapeDetectionButton.Clicked += (sender, args) =>
+            {
+                MainPage.Navigation.PushAsync(new ShapeDetectionPage());
             };
 
             pedestrianDetectionButton.Clicked += (sender, args) =>
@@ -124,20 +172,33 @@ namespace Emgu.CV.XamarinForms
                 MainPage.Navigation.PushAsync(new FeatureMatchingPage());
             };
 
+            licensePlateRecognitionButton.Clicked += (sender, args) =>
+            {
+                MainPage.Navigation.PushAsync(new LicensePlateRecognitionPage());
+            };
 
-
-#if NETFX_CORE
-            //ocrButton.IsVisible = false;
-            dnnButton.IsVisible = false;
-            faceLandmarkDetectionButton.IsVisible = false;
-#else
-            dnnButton.Clicked += (sender, args) => { MainPage.Navigation.PushAsync(new DnnPage()); };
+            maskRcnnButton.Clicked += (sender, args) => { MainPage.Navigation.PushAsync(new MaskRcnnPage()); };
             faceLandmarkDetectionButton.Clicked += (sender, args) => { MainPage.Navigation.PushAsync(new FaceLandmarkDetectionPage()); };
-#endif
+            stopSignDetectionButton.Clicked += (sender, args) =>
+            {
+                MaskRcnnPage stopSignDetectionPage = new MaskRcnnPage();
+                stopSignDetectionPage.DefaultImage = "stop-sign.jpg";
+                stopSignDetectionPage.ObjectsOfInterest = new string[] { "stop sign" };
+                MainPage.Navigation.PushAsync(stopSignDetectionPage);
+            };
+            yoloButton.Clicked += (sender, args) => { MainPage.Navigation.PushAsync(new YoloPage()); };
+
             ocrButton.Clicked += (sender, args) =>
             {
                 MainPage.Navigation.PushAsync(new OcrPage());
             };
+
+            maskRcnnButton.IsVisible = haveDNN;
+            faceLandmarkDetectionButton.IsVisible = haveDNN;
+            stopSignDetectionButton.IsVisible = haveDNN;
+            yoloButton.IsVisible = haveDNN;
+            licensePlateRecognitionButton.IsVisible = hasInferenceEngine;
+
         }
 
         public Page CurrentPage
@@ -164,5 +225,9 @@ namespace Emgu.CV.XamarinForms
         {
             // Handle when your app resumes
         }
+
+
     }
+
+
 }

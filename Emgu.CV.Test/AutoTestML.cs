@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -929,7 +929,7 @@ namespace Emgu.CV.Test
         [Test]
         public void TestKMeans2()
         {
-            int clustersCount = 2;
+            //int clustersCount = 2;
             int sampleCount = 300;
             int maxVal = 500;
 

@@ -1,7 +1,7 @@
 //----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
-#if !(NETFX_CORE || NETSTANDARD1_4)
+
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -35,7 +35,22 @@ namespace Emgu.CV.Dnn
         /// <summary>
         /// OpenCV's implementation
         /// </summary>
-        OpenCV
+        OpenCV,
+		/// <summary>
+        /// Vulkan based backend
+        /// </summary>
+		VkCom,
+		/// <summary>
+        /// Cuda backend
+        /// </summary>
+		Cuda,
+        /// <summary>
+        /// Inference Engine NGraph
+        /// </summary>
+        InferenceEngineNgraph = 1000000,
+        /// <summary>
+        /// Inference Engine NN Builder 2019
+        /// </summary>
+        InferenceEngineNnBuilder2019 = 1000001,
     }
 }
-#endif

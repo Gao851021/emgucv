@@ -1,8 +1,8 @@
 //----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
-#if !(__ANDROID__ || __UNIFIED__ || NETFX_CORE || UNITY_WSA || NETSTANDARD1_4 || UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR || UNITY_STANDALONE)
+#if !(__ANDROID__ || __UNIFIED__ || NETFX_CORE || UNITY_WSA || NETSTANDARD || UNITY_ANDROID || UNITY_IOS || UNITY_WEBGL || UNITY_EDITOR || UNITY_STANDALONE)
 #define WITH_SERVICE_MODEL
 #endif
 
@@ -15,18 +15,15 @@ using System.ServiceModel;
 using System.Runtime.InteropServices;
 using System.Drawing;
 using System.Threading;
-#if NETFX_CORE
-using Windows.System.Threading;
-#endif
-#if NETSTANDARD1_4 || NETFX_CORE
 using System.Threading.Tasks;
-#endif
+//using System.Threading.Tasks;
 using Emgu.Util;
 using Emgu.CV.Structure;
 using Emgu.CV.Util;
 
 namespace Emgu.CV
 {
+
     /// <summary> 
     /// Capture images from either camera or video file. 
     /// </summary>
@@ -184,7 +181,7 @@ namespace Emgu.CV
             /// <summary>
             /// XINE engine (Linux)
             /// </summary>
-            Xine = 2400,          
+            Xine = 2400,
         }
 
         AutoResetEvent _pauseEvent = new AutoResetEvent(false);
@@ -207,12 +204,12 @@ namespace Emgu.CV
             /// Capture from file using HighGUI
             /// </summary>
             Highgui,
-            
+
         }
 
         private CaptureModuleType _captureModuleType;
 
-#region Properties
+        #region Properties
         /// <summary>
         /// Get the type of the capture module
         /// </summary>
@@ -343,9 +340,9 @@ namespace Emgu.CV
                     throw new NullReferenceException(String.Format("Unable to create capture from {0}", fileName));
             }
         }
-#endregion
+        #endregion
 
-#region implement UnmanagedObject
+        #region implement UnmanagedObject
         /// <summary>
         /// Release the resource for this capture
         /// </summary>
@@ -358,7 +355,7 @@ namespace Emgu.CV
 
 #endif
         }
-#endregion
+        #endregion
 
         /// <summary>
         /// Obtain the capture property
@@ -397,7 +394,7 @@ namespace Emgu.CV
             return grabbed;
         }
 
-#region Grab process
+        #region Grab process
         /// <summary>
         /// The event to be called when an image is grabbed
         /// </summary>
@@ -413,11 +410,7 @@ namespace Emgu.CV
 
         private volatile GrabState _grabState = GrabState.Stopped;
 
-        private void Run(
-#if WITH_SERVICE_MODEL
-                System.ServiceModel.Dispatcher.ExceptionHandler eh = null
-#endif
-            )
+        private void Run(Emgu.Util.ExceptionHandler eh = null)
         {
             try
             {
@@ -438,10 +431,8 @@ namespace Emgu.CV
             }
             catch (Exception e)
             {
-#if WITH_SERVICE_MODEL
                 if (eh != null && eh.HandleException(e))
                         return;
-#endif
                 throw new Exception("Capture error", e);
             }
             finally
@@ -450,29 +441,13 @@ namespace Emgu.CV
             }
         }
 
-        private static void Wait(int millisecond)
-        {
-#if NETFX_CORE || NETSTANDARD1_4
-         Task t = Task.Delay(millisecond);
-         t.Wait();
-#else
-            Thread.Sleep(millisecond);
-#endif
-        }
+        private Task _captureTask = null; 
 
-
-#if WITH_SERVICE_MODEL
         /// <summary>
         /// Start the grab process in a separate thread. Once started, use the ImageGrabbed event handler and RetrieveGrayFrame/RetrieveBgrFrame to obtain the images.
         /// </summary>
         /// <param name="eh">An exception handler. If provided, it will be used to handle exception in the capture thread.</param>
-        public void Start(System.ServiceModel.Dispatcher.ExceptionHandler eh = null)
-#else
-        /// <summary>
-        /// Start the grab process in a separate thread. Once started, use the ImageGrabbed event handler and RetrieveGrayFrame/RetrieveBgrFrame to obtain the images.
-        /// </summary>
-        public void Start()
-#endif
+        public void Start(Emgu.Util.ExceptionHandler eh = null)
         {
             if (_grabState == GrabState.Pause)
             {
@@ -484,16 +459,8 @@ namespace Emgu.CV
             {
                 _grabState = GrabState.Running;
 
-#if NETSTANDARD1_4
-                Task t = new Task(Run);
-                t.Start();
-#elif NETFX_CORE
-                Windows.System.Threading.ThreadPool.RunAsync(delegate { Run(); });
-#elif !WITH_SERVICE_MODEL
-                ThreadPool.QueueUserWorkItem(delegate { Run(); });
-#else
-                ThreadPool.QueueUserWorkItem(delegate { Run(eh); });
-#endif
+                _captureTask = new Task(delegate { Run(eh); });
+                _captureTask.Start();
             }
         }
 
@@ -519,26 +486,32 @@ namespace Emgu.CV
             else
                if (_grabState == GrabState.Running)
                 _grabState = GrabState.Stopping;
+
+            if (_captureTask != null)
+            {
+                _captureTask.Wait(100);
+                _captureTask = null;
+            }
         }
-#endregion
+        #endregion
 
         /// <summary> 
-        /// Retrieve a Gray image frame after Grab()
+        /// Decodes and returns the grabbed video frame.
         /// </summary>
-        /// <param name="image">The output image</param>
-        /// <param name="channel">The channel to retrieve image</param>
-        /// <returns>True if the frame can be retrieved</returns>
-        public virtual bool Retrieve(IOutputArray image, int channel = 0)
+        /// <param name="image">The video frame is returned here. If no frames has been grabbed the image will be empty.</param>
+        /// <param name="flag">It could be a frame index or a driver specific flag</param>
+        /// <returns>False if no frames has been grabbed</returns>
+        public virtual bool Retrieve(IOutputArray image, int flag = 0)
         {
             using (OutputArray oaImage = image.GetOutputArray())
             {
                 if (FlipType == CvEnum.FlipType.None)
                 {
-                    return CvInvoke.cveVideoCaptureRetrieve(Ptr, oaImage, channel);
+                    return CvInvoke.cveVideoCaptureRetrieve(Ptr, oaImage, flag);
                 }
                 else
                 {
-                    bool success = CvInvoke.cveVideoCaptureRetrieve(Ptr, oaImage, channel);
+                    bool success = CvInvoke.cveVideoCaptureRetrieve(Ptr, oaImage, flag);
                     if (success)
                         CvInvoke.Flip(image, image, FlipType);
                     return success;
@@ -547,12 +520,14 @@ namespace Emgu.CV
         }
 
         /// <summary>
-        /// Similar to the C++ implementation of cv::Capture &gt;&gt; Mat. It first call Grab() function follows by Retrieve()
+        /// First call Grab() function follows by Retrieve()
         /// </summary>
-        /// <param name="m">The matrix the image will be read into.</param>
-        public void Read(Mat m)
+        /// <param name="m">The output array where the image will be read into.</param>
+        /// <returns>False if no frames has been grabbed</returns>
+        public bool Read(IOutputArray m)
         {
-            CvInvoke.cveVideoCaptureReadToMat(Ptr, m);
+            using (OutputArray oaM = m.GetOutputArray())
+                return CvInvoke.cveVideoCaptureRead(Ptr, oaM);
         }
 
         /// <summary>
@@ -570,7 +545,7 @@ namespace Emgu.CV
             }
         }
 
-#region implement ICapture
+        #region implement ICapture
         /// <summary> 
         /// Capture a Bgr image frame
         /// </summary>
@@ -614,7 +589,7 @@ namespace Emgu.CV
             return null;
 
         }
-#endregion
+        #endregion
 
         /*
           ///<summary> Capture Bgr image frame with timestamp</summary>
@@ -692,7 +667,7 @@ namespace Emgu.CV
         /// </summary>
         public int ID
         {
-            get 
+            get
             {
                 return _id;
             }
@@ -716,27 +691,8 @@ namespace Emgu.CV
 
     partial class CvInvoke
     {
-        [DllImport(ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]
-        internal static extern void cveVideoCaptureReadToMat(IntPtr capture, IntPtr mat);
-
-#if NETFX_CORE
-        [UnmanagedFunctionPointer(CvInvoke.CvCallingConvention)]
-        public delegate void WinrtMessageLoopCallback();
-
-        [DllImport(ExternLibrary, EntryPoint= "cveWinrtStartMessageLoop", CallingConvention = CvInvoke.CvCallingConvention)]
-        public static extern void WinrtStartMessageLoop(WinrtMessageLoopCallback callback);
-
-        [DllImport(ExternLibrary, EntryPoint = "cveWinrtSetFrameContainer", CallingConvention = CvInvoke.CvCallingConvention)]
-        public static extern void WinrtSetFrameContainer(Windows.UI.Xaml.Controls.Image image);
-
-        [DllImport(ExternLibrary, EntryPoint = "cveWinrtImshow", CallingConvention = CvInvoke.CvCallingConvention)]
-        public static extern void WinrtImshow();
-
-        [DllImport(ExternLibrary, EntryPoint = "cveWinrtOnVisibilityChanged", CallingConvention = CvInvoke.CvCallingConvention)]
-        public static extern void WinrtOnVisibilityChanged(
-            [MarshalAs(CvInvoke.BoolMarshalType)]
-            bool visible);
-#endif
+        //[DllImport(ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]
+        //internal static extern void cveVideoCaptureReadToMat(IntPtr capture, IntPtr mat);
 
         [DllImport(ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]
         internal static extern IntPtr cveVideoCaptureCreateFromDevice(int index, VideoCapture.API apiPreference);
@@ -773,7 +729,7 @@ namespace Emgu.CV
         internal static extern void cveGetBackendName(int api, IntPtr name);
 
         /// <summary>
-        /// Returns list of all builtin backends
+        /// Returns list of all built-in backends
         /// </summary>
         public static Backend[] Backends
         {

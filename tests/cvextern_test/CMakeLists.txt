@@ -1,5 +1,5 @@
 # --------------------------------------------------------
-#  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.
+#  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.
 #
 #  CMake file for cvextern_test. See root CMakeLists.txt
 # --------------------------------------------------------
@@ -20,6 +20,7 @@ INCLUDE_DIRECTORIES("${OPENCV_MODULES_DIR}/highgui/include")
 INCLUDE_DIRECTORIES("${OPENCV_MODULES_DIR}/imgcodecs/include")
 INCLUDE_DIRECTORIES("${OPENCV_MODULES_DIR}/videoio/include")
 INCLUDE_DIRECTORIES("${OPENCV_MODULES_DIR}/photo/include")
+INCLUDE_DIRECTORIES("${OPENCV_MODULES_DIR}/dnn/include")
 
 INCLUDE_DIRECTORIES("${OPENCV_SUBFOLDER}/include/opencv")
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/../../Emgu.CV.Extern/")
@@ -59,6 +60,12 @@ IF(WIN32 AND WITH_CUDA)
   ENDIF()
 ENDIF()
 ############################### GPU END ################################
+
+IF(WITH_INF_ENGINE)
+	#SET(INF_ENGINE_LIB_DIRS )
+	#link_directories("${INF_ENGINE_LIB_DIRS}/Release")
+	link_directories("${IE_INCLUDE_DIR}/../lib/intel64/")
+ENDIF()
 
 ############################### OPENMP START ##############################
 IF(WITH_OPENMP)
@@ -113,7 +120,7 @@ IF(EMGU_ENABLE_SSE)
   IF(MSVC AND EMGUCV_ARCH MATCHES "win32" AND (NOT CV_ICC)) 
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:SSE2")        ## Optimization
   ENDIF()
-  IF (NOT WIN32)
+  IF ((NOT WIN32) AND NOT ("${CMAKE_SYSTEM_NAME}" STREQUAL "Emscripten"))
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -latomic")
   ENDIF()
 ENDIF()
@@ -125,6 +132,10 @@ target_link_libraries(${the_target} ${OPENCV_LINKER_LIBS}
 #  ${TIFF_LIBRARY} 
 #  ${GEOTIFF_LIBRARY}
 )
+
+IF("${CMAKE_SYSTEM_NAME}" STREQUAL "Emscripten")
+  set_target_properties(${the_target} PROPERTIES SUFFIX ".html")
+ENDIF()
 
 IF(DEFINED EMGUCV_PLATFORM_TOOLSET)
   set_target_properties(${the_target} PROPERTIES PLATFORM_TOOLSET ${EMGUCV_PLATFORM_TOOLSET})

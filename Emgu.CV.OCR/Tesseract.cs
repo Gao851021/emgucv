@@ -1,7 +1,6 @@
 ﻿//----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
-
 
 using Emgu.CV.Util;
 using System;
@@ -215,14 +214,12 @@ namespace Emgu.CV.OCR
             get
             {
                 String loadDirectory = ".";
-#if NETSTANDARD1_4 || NETFX_CORE
-#else
+
                 System.Reflection.Assembly asm = typeof(CvInvoke).Assembly; //System.Reflection.Assembly.GetExecutingAssembly();
                 if (!((String.IsNullOrEmpty(asm.Location) || !System.IO.File.Exists(asm.Location)) && AppDomain.CurrentDomain.BaseDirectory != null))
                 {
                     loadDirectory = System.IO.Path.GetDirectoryName(asm.Location);
                 }
-#endif
                 return Path.Combine(loadDirectory, "tessdata") + System.IO.Path.DirectorySeparatorChar;
             }
         }

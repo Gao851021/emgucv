@@ -98,19 +98,27 @@
       <Link>haarcascade_frontalface_default.xml</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\..\FaceDetection\lena.jpg">
+    <Content Include="..\Core\lena.jpg">
       <Link>lena.jpg</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\..\FeatureMatching\box.png">
+    <Content Include="..\Core\pic3.png">
+      <Link>pic3.png</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Core\stop-sign.jpg">
+      <Link>stop-sign.jpg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Core\box.png">
       <Link>box.png</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\..\FeatureMatching\box_in_scene.png">
+    <Content Include="..\Core\box_in_scene.png">
       <Link>box_in_scene.png</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\..\PedestrianDetection\pedestrian.png">
+    <Content Include="..\Core\pedestrian.png">
       <Link>pedestrian.png</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -159,20 +167,26 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
-      <Version>6.2.9</Version>
+      <Version>6.2.10</Version>
     </PackageReference>
     <PackageReference Include="Xam.Plugin.Media">
-      <Version>4.0.1.5</Version>
+      <Version>5.0.1</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Forms">
-      <Version>4.2.0.709249</Version>
+      <Version>4.8.0.1269</Version>
+    </PackageReference>
+    <PackageReference Include="Xamarin.Plugin.FilePicker">
+      <Version>2.1.41</Version>
     </PackageReference>
   </ItemGroup>
-  <Import Project="..\..\..\Emgu.CV\Emgu.CV.projitems" Label="Shared" />
-  <Import Project="..\..\..\Emgu.CV.Contrib\Emgu.CV.Contrib.projitems" Label="Shared" />
-  <Import Project="..\..\..\Emgu.CV.OCR\Emgu.CV.OCR.projitems" Label="Shared" />
-  <Import Project="..\..\..\Emgu.Util\Emgu.Util.projitems" Label="Shared" />
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Emgu.CV.Platform\NetStandard\Emgu.CV.Platform.Netstandard.csproj">
+      <Project>{5e912dcc-e7ac-491f-8293-c985e3ab5ca7}</Project>
+      <Name>Emgu.CV.Platform.Netstandard</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="..\Core\Emgu.CV.XamarinForms.projitems" Label="Shared" />
+  <Import Project="..\..\..\Emgu.CV.Runtime\UWP\Emgu.CV.Runtime.UWP.projitems" Label="Shared" />
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>

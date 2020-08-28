@@ -1,5 +1,5 @@
 ﻿//----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
 using System;
@@ -29,11 +29,10 @@ namespace Emgu.CV
       /// <param name="fileName">The name of the file that contains the CascadeClassifier</param>
       public CascadeClassifier(String fileName)
       {
-#if !(NETFX_CORE || NETSTANDARD1_4)
+
          FileInfo file = new FileInfo(fileName);
          if (!file.Exists)
             throw new FileNotFoundException(String.Format("File '{0}' not found", fileName));
-#endif
          using (CvString s = new CvString(fileName))
             _ptr = CvInvoke.cveCascadeClassifierCreateFromFile(s);
 

@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
 using System;
@@ -14,22 +14,12 @@ using Emgu.CV.Util;
 using Emgu.CV;
 using Emgu.Util;
 
-#if __ANDROID__
-using Bitmap = Android.Graphics.Bitmap;
-#elif __IOS__
-using UIKit;
-using CoreGraphics;
-#else
-#endif
-
 namespace Emgu.CV.Cuda
 {
     /// <summary>
     /// A GpuMat, use the generic version if possible. The non generic version is good for use as buffer in stream calls.
     /// </summary>
-#if !(NETFX_CORE || NETSTANDARD1_4)
     [DebuggerTypeProxy(typeof(GpuMat.DebuggerProxy))]
-#endif
     public partial class GpuMat : UnmanagedObject, IEquatable<GpuMat>, IInputOutputArray
     {
 
@@ -101,7 +91,7 @@ namespace Emgu.CV.Cuda
         /// <param name="mat">The matrix where the region is extracted from</param>
         /// <param name="colRange">The column range.</param>
         /// <param name="rowRange">The row range.</param>
-        public GpuMat(GpuMat mat, Range rowRange, Range colRange)
+        public GpuMat(GpuMat mat, Emgu.CV.Structure.Range rowRange, Emgu.CV.Structure.Range colRange)
            : this(CudaInvoke.GetRegion(mat, ref rowRange, ref colRange), true)
         {
         }
@@ -214,14 +204,6 @@ namespace Emgu.CV.Cuda
             }
         }
 
-#if __IOS__
-        public UIImage ToUIImage()
-        {
-         using (Mat m = ToMat())
-            return m.ToUIImage();
-        }
-#endif
-
         /// <summary>
         /// Copies scalar value to every selected element of the destination GpuMat:
         /// arr(I)=value if mask(I)!=0
@@ -299,7 +281,7 @@ namespace Emgu.CV.Cuda
         /// <remarks>The parent GpuMat should never be released before the returned GpuMat that represent the subregion</remarks>
         public GpuMat RowRange(int start, int end)
         {
-            return new GpuMat(this, new Range(start, end), Range.All);
+            return new GpuMat(this, new Emgu.CV.Structure.Range(start, end), Emgu.CV.Structure.Range.All);
         }
 
         /// <summary>
@@ -322,7 +304,7 @@ namespace Emgu.CV.Cuda
         /// <remarks>The parent GpuMat should never be released before the returned GpuMat that represent the subregion</remarks>
         public GpuMat ColRange(int start, int end)
         {
-            return new GpuMat(this, Range.All, new Range(start, end));
+            return new GpuMat(this, Emgu.CV.Structure.Range.All, new Emgu.CV.Structure.Range(start, end));
         }
 
         /// <summary>
@@ -442,23 +424,6 @@ namespace Emgu.CV.Cuda
             return result;
         }
 
-#if !(__UNIFIED__ || NETSTANDARD1_4 || NETFX_CORE || UNITY_ANDROID || UNITY_IPHONE || UNITY_STANDALONE || UNITY_METRO)
-        /// <summary>
-        /// Get the Bitmap from this GpuMat
-        /// </summary>
-        public Bitmap Bitmap
-        {
-            get
-            {
-                using (Mat tmp = new Mat())
-                {
-                    Download(tmp);
-                    return tmp.Bitmap;
-                }
-            }
-        }
-#endif
-
         /// <summary>
         /// Returns the min / max location and values for the image
         /// </summary>
@@ -529,13 +494,24 @@ namespace Emgu.CV.Cuda
                 _v = v;
             }
 
+            public Mat Mat
+            {
+                get
+                {
+                    Mat m = new Mat();
+                    _v.Download(m);
+                    return m;
+                }
+            }
+
+            /*
             public Array Data
             {
                 get
                 {
                     return _v.GetData(true);
                 }
-            }
+            }*/
         }
     }
 

@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.
 //
 //----------------------------------------------------------------------------
 
@@ -9,21 +9,45 @@
 #define EMGU_FACE_C_H
 
 #include "opencv2/core/core_c.h"
-//#include "opencv2/face/facerec.hpp"
+
+#ifdef HAVE_OPENCV_FACE
 #include "opencv2/face/bif.hpp"
 #include "opencv2/face.hpp"
+#else
+static inline CV_NORETURN void throw_no_face() { CV_Error(cv::Error::StsBadFunc, "The library is compiled without face support"); }
+namespace cv {
+	namespace face {
+		class FaceRecognizer {};
+		class BasicFaceRecognizer {};
+		class EigenFaceRecognizer {};
+		class FisherFaceRecognizer {};
+		class LBPHFaceRecognizer {};
+		class BIF {};
+		class Facemark {};
+		class FacemarkAAM {
+		public:
+			struct  Params {};
+		};
+		class FacemarkLBF {
+		public:
+			struct  Params {};
+		};
+		class MACE {};
+	}
+}
+#endif
 
 //EigenFaceRecognizer
 CVAPI(cv::face::EigenFaceRecognizer*) cveEigenFaceRecognizerCreate(
 	int numComponents,
 	double threshold,
 	cv::face::FaceRecognizer** faceRecognizerPtr,
-	cv::face::FaceRecognizer** basicFaceRecognizerPtr,
+	cv::face::BasicFaceRecognizer** basicFaceRecognizerPtr,
 	cv::Ptr<cv::face::EigenFaceRecognizer>** sharedPtr);
 CVAPI(void) cveEigenFaceRecognizerRelease(cv::Ptr<cv::face::EigenFaceRecognizer>** sharedPtr);
 
 CVAPI(cv::face::FisherFaceRecognizer*) cveFisherFaceRecognizerCreate(
-	int numComponents, 
+	int numComponents,
 	double threshold,
 	cv::face::FaceRecognizer** faceRecognizerPtr,
 	cv::face::FaceRecognizer** basicFaceRecognizerPtr,
@@ -31,14 +55,15 @@ CVAPI(cv::face::FisherFaceRecognizer*) cveFisherFaceRecognizerCreate(
 CVAPI(void) cveFisherFaceRecognizerRelease(cv::Ptr<cv::face::FisherFaceRecognizer>** sharedPtr);
 
 CVAPI(cv::face::LBPHFaceRecognizer*) cveLBPHFaceRecognizerCreate(
-	int radius, 
-	int neighbors, 
-	int gridX, 
-	int gridY, 
+	int radius,
+	int neighbors,
+	int gridX,
+	int gridY,
 	double threshold,
 	cv::face::FaceRecognizer** faceRecognizerPtr,
 	cv::Ptr<cv::face::LBPHFaceRecognizer>** sharedPtr);
 CVAPI(void) cveLBPHFaceRecognizerRelease(cv::Ptr<cv::face::LBPHFaceRecognizer>** sharedPtr);
+CVAPI(void) cveLBPHFaceRecognizerGetHistograms(cv::face::LBPHFaceRecognizer* recognizer, std::vector<cv::Mat>* histograms);
 
 CVAPI(void) cveFaceRecognizerTrain(cv::face::FaceRecognizer* recognizer, cv::_InputArray* images, cv::_InputArray* labels);
 CVAPI(void) cveFaceRecognizerUpdate(cv::face::FaceRecognizer* recognizer, cv::_InputArray* images, cv::_InputArray* labels);
@@ -83,7 +108,7 @@ CVAPI(bool) cveFacemarkFit(cv::face::Facemark* facemark, cv::_InputArray* image,
 //CVAPI(bool) cveFacemarkAddTrainingSample(cv::face::Facemark* facemark, cv::_InputArray* image, cv::_InputArray* landmarks);
 //CVAPI(void) cveFacemarkTraining(cv::face::Facemark* facemark);
 
-CVAPI(void) cveDrawFacemarks(cv::_InputOutputArray* image, cv::_InputArray* points,	CvScalar* color);
+CVAPI(void) cveDrawFacemarks(cv::_InputOutputArray* image, cv::_InputArray* points, CvScalar* color);
 
 CVAPI(cv::face::MACE*) cveMaceCreate(int imgSize, cv::Ptr<cv::face::MACE>** sharedPtr);
 CVAPI(void) cveMaceSalt(cv::face::MACE* mace, cv::String* passphrase);

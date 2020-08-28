@@ -1,5 +1,5 @@
 ﻿//----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
 using System;
@@ -22,10 +22,11 @@ namespace Emgu.CV.Features2D
         /// </summary>
         protected IntPtr _feature2D;
 
+        /*
         /// <summary>
         /// The pointer to the Algorithm object.
         /// </summary>
-        protected IntPtr _algorithm;
+        protected IntPtr _algorithm;*/
 
         /// <summary>
         /// Get the pointer to the Feature2D object
@@ -40,8 +41,10 @@ namespace Emgu.CV.Features2D
         {
             get
             {
+                /*
                 if (_algorithm != IntPtr.Zero)
                     return _algorithm;
+                */
 
                 if (_feature2D == IntPtr.Zero)
                     return IntPtr.Zero;
@@ -72,7 +75,7 @@ namespace Emgu.CV.Features2D
         {
             _ptr = IntPtr.Zero;
             _feature2D = IntPtr.Zero;
-            _algorithm = IntPtr.Zero;
+            //_algorithm = IntPtr.Zero;
         }
 
         /// <summary>

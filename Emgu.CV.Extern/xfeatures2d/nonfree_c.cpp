@@ -1,45 +1,33 @@
 //----------------------------------------------------------------------------
 //
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.
 //
 //----------------------------------------------------------------------------
 
 #include "nonfree_c.h"
 
-//SIFTDetector
-cv::xfeatures2d::SIFT* cveSIFTCreate(
-	int nFeatures, int nOctaveLayers,
-	double contrastThreshold, double edgeThreshold,
-	double sigma, cv::Feature2D** feature2D,
-	cv::Ptr<cv::xfeatures2d::SIFT>** sharedPtr)
-{
-	cv::Ptr<cv::xfeatures2d::SIFT> siftPtr = cv::xfeatures2d::SIFT::create(nFeatures, nOctaveLayers, contrastThreshold, edgeThreshold, sigma);
-	*sharedPtr = new cv::Ptr<cv::xfeatures2d::SIFT>(siftPtr);
-	*feature2D = dynamic_cast<cv::Feature2D*>(siftPtr.get());
-
-	return siftPtr.get();
-}
-
-void cveSIFTRelease(cv::Ptr<cv::xfeatures2d::SIFT>** sharedPtr)
-{
-	delete *sharedPtr;
-	*sharedPtr = 0;
-}
-
 //SURFDetector
 cv::xfeatures2d::SURF* cveSURFCreate(double hessianThresh, int nOctaves, int nOctaveLayers, bool extended, bool upright, cv::Feature2D** feature2D, cv::Ptr<cv::xfeatures2d::SURF>** sharedPtr)
 {
+#ifdef HAVE_OPENCV_XFEATURES2D
 	cv::Ptr<cv::xfeatures2d::SURF> surfPtr = cv::xfeatures2d::SURF::create(hessianThresh, nOctaves, nOctaveLayers, extended, upright);
 	*sharedPtr = new cv::Ptr<cv::xfeatures2d::SURF>(surfPtr);
 	*feature2D = dynamic_cast<cv::Feature2D*>(surfPtr.get());
 
 	return surfPtr.get();
+#else
+	throw_no_xfeatures2d();
+#endif
 }
 
 void cveSURFRelease(cv::Ptr<cv::xfeatures2d::SURF>** sharedPtr)
 {
-	delete *sharedPtr;
+#ifdef HAVE_OPENCV_XFEATURES2D
+	delete* sharedPtr;
 	*sharedPtr = 0;
+#else
+	throw_no_xfeatures2d();
+#endif
 }
 
 /*

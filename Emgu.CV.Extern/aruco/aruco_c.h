@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.
 //
 //----------------------------------------------------------------------------
 
@@ -8,10 +8,50 @@
 #ifndef EMGU_ARUCO_C_H
 #define EMGU_ARUCO_C_H
 
+#include "opencv2/opencv_modules.hpp"
 #include "opencv2/core/core_c.h"
+
+#ifdef HAVE_OPENCV_ARUCO
+
 #include "opencv2/aruco.hpp"
 #include "opencv2/aruco/charuco.hpp"
 
+#else
+
+static inline CV_NORETURN void throw_no_aruco() { CV_Error(cv::Error::StsBadFunc, "The library is compiled without Aruco support"); }
+
+namespace cv
+{
+	namespace aruco
+	{
+		class Dictionary
+		{
+
+		};
+
+		class DetectorParameters
+		{
+
+		};
+
+		class Board
+		{
+			
+		};
+		
+		class GridBoard
+		{
+			
+		};
+
+		class CharucoBoard
+		{
+			
+		};
+	}
+}
+
+#endif
 
 CVAPI(cv::aruco::Dictionary*) cveArucoGetPredefinedDictionary(int name, cv::Ptr<cv::aruco::Dictionary>** sharedPtr);
 CVAPI(cv::aruco::Dictionary*) cveArucoDictionaryCreate1(int nMarkers, int markerSize, cv::Ptr<cv::aruco::Dictionary>** sharedPtr);

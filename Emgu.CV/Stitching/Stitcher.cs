@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 using System;
 using System.CodeDom;
@@ -147,6 +147,51 @@ namespace Emgu.CV.Stitching
         }
 
         /// <summary>
+        /// Set the exposure compensator for this stitcher.
+        /// </summary>
+        /// <param name="exposureCompensator">The exposure compensator</param>
+        public void SetExposureCompensator(ExposureCompensator exposureCompensator)
+        {
+            StitchingInvoke.cveStitcherSetExposureCompensator(_ptr, exposureCompensator.ExposureCompensatorPtr);
+        }
+
+        /// <summary>
+        /// Set the bundle adjuster for this stitcher
+        /// </summary>
+        /// <param name="bundleAdjuster">The bundle adjuster</param>
+        public void SetBundleAdjusterCompensator(BundleAdjusterBase bundleAdjuster)
+        {
+            StitchingInvoke.cveStitcherSetBundleAdjuster(_ptr, bundleAdjuster.BundleAdjusterPtr);
+        }
+
+        /// <summary>
+        /// Set the seam finder for this stitcher
+        /// </summary>
+        /// <param name="seamFinder">The seam finder</param>
+        public void SetSeamFinder(SeamFinder seamFinder)
+        {
+            StitchingInvoke.cveStitcherSetSeamFinder(_ptr, seamFinder.SeamFinderPtr);
+        }
+
+        /// <summary>
+        /// Set the estimator for this stitcher
+        /// </summary>
+        /// <param name="estimator">The estimator</param>
+        public void SetEstimator(Estimator estimator)
+        {
+            StitchingInvoke.cveStitcherSetEstimator(_ptr, estimator.EstimatorPtr);
+        }
+
+        /// <summary>
+        /// Set the features matcher for this stitcher
+        /// </summary>
+        /// <param name="featuresMatcher">The features matcher</param>
+        public void SetFeaturesMatcher(FeaturesMatcher featuresMatcher)
+        {
+            StitchingInvoke.cveStitcherSetFeaturesMatcher(_ptr, featuresMatcher.FeaturesMatcherPtr);
+        }
+
+        /// <summary>
         /// Set the warper creator for this stitcher.
         /// </summary>
         /// <param name="warperCreator">The warper creator</param>
@@ -219,6 +264,15 @@ namespace Emgu.CV.Stitching
         }
 
         /// <summary>
+        /// Get or Set the interpolation type.
+        /// </summary>
+        public CvEnum.Inter InterpolationFlags
+        {
+            get { return StitchingInvoke.cveStitcherGetInterpolationFlags(_ptr); }
+            set { StitchingInvoke.cveStitcherSetInterpolationFlags(_ptr, value);}
+        }
+
+        /// <summary>
         /// Release memory associated with this stitcher
         /// </summary>
         protected override void DisposeObject()
@@ -261,6 +315,21 @@ namespace Emgu.CV.Stitching
         internal static extern void cveStitcherSetBlender(IntPtr stitcher, IntPtr b);
 
         [DllImport(CvInvoke.ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]
+        internal static extern void cveStitcherSetExposureCompensator(IntPtr stitcher, IntPtr exposureComp);
+
+        [DllImport(CvInvoke.ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]
+        internal static extern void cveStitcherSetBundleAdjuster(IntPtr stitcher, IntPtr bundleAdjuster);
+
+        [DllImport(CvInvoke.ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]
+        internal static extern void cveStitcherSetSeamFinder(IntPtr stitcher, IntPtr seamFinder);
+
+        [DllImport(CvInvoke.ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]
+        internal static extern void cveStitcherSetEstimator(IntPtr stitcher, IntPtr estimator);
+
+        [DllImport(CvInvoke.ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]
+        internal static extern void cveStitcherSetFeaturesMatcher(IntPtr stitcher, IntPtr featuresMatcher);
+
+        [DllImport(CvInvoke.ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]
         internal static extern void cveStitcherRelease(ref IntPtr sharedPtr);
 
 
@@ -298,6 +367,10 @@ namespace Emgu.CV.Stitching
         [DllImport(CvInvoke.ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]
         internal static extern double cveStitcherGetRegistrationResol(IntPtr stitcher);
 
+        [DllImport(CvInvoke.ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]
+        internal static extern CvEnum.Inter cveStitcherGetInterpolationFlags(IntPtr stitcher);
+        [DllImport(CvInvoke.ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]
+        internal static extern void cveStitcherSetInterpolationFlags(IntPtr stitcher, CvEnum.Inter interpFlags);
 
         [DllImport(CvInvoke.ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]
         internal static extern Stitcher.Status cveStitcherEstimateTransform(IntPtr stitcher, IntPtr images, IntPtr masks);

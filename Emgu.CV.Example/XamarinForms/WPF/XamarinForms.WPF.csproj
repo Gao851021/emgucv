@@ -8,7 +8,7 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>XamarinForms.WPF</RootNamespace>
     <AssemblyName>Example.XamarinForms.WPF</AssemblyName>
-    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <WarningLevel>4</WarningLevel>
@@ -38,6 +38,44 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x86\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
+    <OutputPath>bin\x86\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -105,42 +143,44 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Emgu.CV.UI\Emgu.CV.UI.csproj">
-      <Project>{90e78bbf-c7fe-4d8e-ade1-75448e866fdb}</Project>
-      <Name>Emgu.CV.UI</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\Emgu.CV.World\Emgu.CV.World.csproj">
-      <Project>{3f5d7c08-96ba-4037-bb24-afa2c336e260}</Project>
-      <Name>Emgu.CV.World</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="..\..\..\opencv\data\haarcascades\haarcascade_eye.xml">
-      <Link>haarcascade_eye.xml</Link>
+    <Content Include="..\Core\cars_license_plate.png">
+      <Link>cars_license_plate.png</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\..\..\opencv\data\haarcascades\haarcascade_frontalface_default.xml">
-      <Link>haarcascade_frontalface_default.xml</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\..\FaceDetection\lena.jpg">
+    <Content Include="..\Core\lena.jpg">
       <Link>lena.jpg</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\..\FeatureMatching\box.png">
+    <Content Include="..\Core\box.png">
       <Link>box.png</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\..\FeatureMatching\box_in_scene.png">
+    <Content Include="..\Core\box_in_scene.png">
       <Link>box_in_scene.png</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\..\PedestrianDetection\pedestrian.png">
+    <Content Include="..\Core\pedestrian.png">
       <Link>pedestrian.png</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Core\imL.png">
+      <Link>imL.png</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Core\imR.png">
+      <Link>imR.png</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="..\Core\dog416.png">
       <Link>dog416.png</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Core\pic3.png">
+      <Link>pic3.png</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Core\stop-sign.jpg">
+      <Link>stop-sign.jpg</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="..\Core\test_image.png">
@@ -149,19 +189,30 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="OpenTK.GLControl">
-      <Version>3.0.1</Version>
-    </PackageReference>
     <PackageReference Include="Xam.Plugin.Media">
-      <Version>4.0.1.5</Version>
+      <Version>5.0.1</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Forms">
-      <Version>4.1.0.555618</Version>
+      <Version>4.7.0.1142</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Forms.Platform.WPF">
-      <Version>4.1.0.555618</Version>
+      <Version>4.7.0.1142</Version>
+    </PackageReference>
+    <PackageReference Include="Xamarin.Plugin.FilePicker">
+      <Version>2.1.41</Version>
     </PackageReference>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Emgu.CV.Platform\DotNet\Framework\Emgu.CV.Platform.NetFramework.csproj">
+      <Project>{90e78bbf-c7fe-4d8e-ade1-75448e866fdb}</Project>
+      <Name>Emgu.CV.Platform.NetFramework</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\Emgu.CV.Platform\NetStandard\Emgu.CV.Platform.Netstandard.csproj">
+      <Project>{f8ccdef7-e79a-4fd5-8c0e-9290059c7dd6}</Project>
+      <Name>Emgu.CV.Platform.Netstandard</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="..\Core\Emgu.CV.XamarinForms.projitems" Label="Shared" />
+  <Import Project="..\..\..\Emgu.CV.Runtime\Windows\Emgu.CV.Runtime.Windows.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

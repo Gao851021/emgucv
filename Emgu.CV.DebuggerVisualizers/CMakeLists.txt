@@ -1,54 +1,8 @@
 # --------------------------------------------------------
-#  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.
+#  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.
 # --------------------------------------------------------
 
 IF((EMGU_CV_BUILD OR EMGU_CV_EXAMPLE_BUILD) AND WIN32)
-
-MACRO(COMPILE_DEBUGGER_VISUALIZER DEBUGGER_VISUALIZER_NAME DEBUGGER_VISUALIZER_CODENAME)
-
-  FIND_FILE(DEBUGGER_VISUALIZER_REF_${DEBUGGER_VISUALIZER_CODENAME}
-  NAME Microsoft.VisualStudio.DebuggerVisualizers.dll
-  #HINTS
-  #"$ENV{ProgramFiles} (x86)/Microsoft Visual Studio ${DEBUGGER_VISUALIZER_CODENAME}/Common7/IDE/PublicAssemblies"
-  #"$ENV{ProgramFiles}/Microsoft Visual Studio ${DEBUGGER_VISUALIZER_CODENAME}/Common7/IDE/PublicAssemblies"
-  PATHS 
-  "$ENV{ProgramFiles} (x86)/Microsoft Visual Studio ${DEBUGGER_VISUALIZER_CODENAME}/Common7/IDE/PublicAssemblies"
-  "$ENV{ProgramFiles} (x86)/Microsoft Visual Studio ${DEBUGGER_VISUALIZER_CODENAME}/Common7/IDE/ReferenceAssemblies/v2.0"
-  "$ENV{ProgramFiles}/Microsoft Visual Studio ${DEBUGGER_VISUALIZER_CODENAME}/Common7/IDE/PublicAssemblies"
-  "$ENV{ProgramFiles}/Microsoft Visual Studio ${DEBUGGER_VISUALIZER_CODENAME}/Common7/IDE/ReferenceAssemblies/v2.0"
-  "$ENV{ProgramFiles} (x86)/Microsoft Visual Studio/${DEBUGGER_VISUALIZER_CODENAME}/Community/Common7/IDE/ReferenceAssemblies/v2.0"
-  )
-  #MESSAGE(STATUS "DEBUGGER_VISUALIZER_REF_${DEBUGGER_VISUALIZER_CODENAME}: ${DEBUGGER_VISUALIZER_REF_${DEBUGGER_VISUALIZER_CODENAME}}")
-  IF(DEBUGGER_VISUALIZER_REF_${DEBUGGER_VISUALIZER_CODENAME})  
-  PROJECT(${DEBUGGER_VISUALIZER_NAME})
-  FILE(GLOB_RECURSE SRC_CV_DEBUGGER_VISUALIZER ${CMAKE_CURRENT_SOURCE_DIR} "*.cs")
-  SET(SRC_CV_DEBUGGER_VISUALIZER ${SRC_CV_DEBUGGER_VISUALIZER} ${CMAKE_CURRENT_SOURCE_DIR}/../CommonAssemblyInfo.cs)
-  SIGN_ASSEMBLY(${CMAKE_CURRENT_SOURCE_DIR}/../Emgu.CV.snk)
-  ADD_CS_REFERENCES("System.Drawing.dll;${LIBRARY_OUTPUT_PATH}/Emgu.CV.World.dll;${LIBRARY_OUTPUT_PATH}/Emgu.CV.UI.dll;${DEBUGGER_VISUALIZER_REF_${DEBUGGER_VISUALIZER_CODENAME}}")
-  MESSAGE(STATUS "Configuring ${DEBUGGER_VISUALIZER_NAME} (${DEBUGGER_VISUALIZER_CODENAME}) with ${DEBUGGER_VISUALIZER_REF_${DEBUGGER_VISUALIZER_CODENAME}}")
-  COMPILE_CS(${DEBUGGER_VISUALIZER_NAME} "library" "${SRC_CV_DEBUGGER_VISUALIZER}" ALL)
-
-  if(ENABLE_SOLUTION_FOLDERS)
-      set_target_properties(${DEBUGGER_VISUALIZER_NAME} PROPERTIES FOLDER "emgu")
-  endif()
-
-  ADD_DEPENDENCIES(${DEBUGGER_VISUALIZER_NAME} Emgu.CV.UI)
-
-  INSTALL(
-    FILES 
-    ${LIBRARY_OUTPUT_PATH}/${DEBUGGER_VISUALIZER_NAME}.dll
-    DESTINATION ${CPACK_PACKAGE_CLI_FOLDER}
-    COMPONENT emgucv_binary)
-  ENDIF()
-ENDMACRO()
-
-#COMPILE_DEBUGGER_VISUALIZER(Emgu.CV.DebuggerVisualizers.VS2008 9.0)
-#COMPILE_DEBUGGER_VISUALIZER(Emgu.CV.DebuggerVisualizers.VS2010 10.0)
-COMPILE_DEBUGGER_VISUALIZER(Emgu.CV.DebuggerVisualizers.VS2012 11.0)
-COMPILE_DEBUGGER_VISUALIZER(Emgu.CV.DebuggerVisualizers.VS2013 12.0)
-COMPILE_DEBUGGER_VISUALIZER(Emgu.CV.DebuggerVisualizers.VS2015 14.0)
-COMPILE_DEBUGGER_VISUALIZER(Emgu.CV.DebuggerVisualizers.VS2017 2017)
-COMPILE_DEBUGGER_VISUALIZER(Emgu.CV.DebuggerVisualizers.VS2019 2019)
 
 INSTALL(
   DIRECTORY
@@ -63,9 +17,34 @@ INSTALL(
   PATTERN "CMakeFiles" EXCLUDE
   PATTERN "${PROJECT_NAME}.dir" EXCLUDE
 )
+
 INSTALL(
     FILES 
     ${CMAKE_CURRENT_SOURCE_DIR}/../miscellaneous/vswhere.exe
     DESTINATION miscellaneous
     COMPONENT emgucv_binary)
+
+PROJECT(Emgu.CV.DebuggerVisualizers)
+
+BUILD_CSPROJ_IN_SOLUTION(${PROJECT_NAME} "${CMAKE_CURRENT_SOURCE_DIR}/../Solution/Windows.Desktop/Emgu.CV.DebuggerVisualizers.sln" "Emgu.CV.DebuggerVisualizers" "${EXTRA_BUILD_FLAGS}" ALL)	
+#BUILD_CSPROJ(${PROJECT_NAME} "${CMAKE_CURRENT_SOURCE_DIR}/../Emgu.CV.DebuggerVisualizers/Emgu.CV.DebuggerVisualizers.csproj" "${EXTRA_BUILD_FLAGS}" ALL)
+ADD_CUSTOM_COMMAND(TARGET ${PROJECT_NAME} 
+  PRE_BUILD
+  COMMAND ${MSBUILD_EXECUTABLE} -t:restore Emgu.CV.DebuggerVisualizers.sln
+  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../Solution/Windows.Desktop/")
+
+ADD_DEPENDENCIES(${PROJECT_NAME} cvextern)
+
+INSTALL(
+   FILES 
+   ${LIBRARY_OUTPUT_PATH}/${PROJECT_NAME}.dll 
+   ${LIBRARY_OUTPUT_PATH}/System.Runtime.InteropServices.RuntimeInformation.dll
+   DESTINATION ${CPACK_PACKAGE_CLI_FOLDER}
+   COMPONENT emgucv_binary)
+
+if(ENABLE_SOLUTION_FOLDERS)
+    set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "emgu")
+endif()
+
+
 ENDIF()

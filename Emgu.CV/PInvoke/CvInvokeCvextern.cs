@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
 using System;
@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using Emgu.CV.Features2D;
 using Emgu.CV.Structure;
 using System.Drawing;
+using Emgu.CV.Util;
 using Emgu.Util;
 
 namespace Emgu.CV
@@ -346,6 +347,38 @@ namespace Emgu.CV
 
         [DllImport(ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]
         private static extern void cveGetCvStructSizes(ref CvStructSizes sizes);
+
+        /// <summary>
+        /// Get the dictionary that hold the Open CV build flags. The key is a String and the value is type double. If it is a flag, 0 means false and 1 means true 
+        /// </summary>
+        /// <returns></returns>
+        public static Dictionary<String, double> ConfigDict
+        {
+            get
+            {
+                using (VectorOfCvString vs = new VectorOfCvString())
+                using (VectorOfDouble vd = new VectorOfDouble())
+                {
+                    cveGetConfigDict(vs, vd);
+
+                    String[] keys = vs.ToArray();
+                    double[] values = vd.ToArray();
+
+                    Dictionary<String, double> dict = new Dictionary<string, double>();
+                    for (int i = 0; i < keys.Length; i++)
+                    {
+                        dict[keys[i]] = values[i];
+                    }
+
+                    return dict;
+                }
+                
+            }
+            
+        }
+
+        [DllImport(ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]
+        private static extern void cveGetConfigDict(IntPtr names, IntPtr values);
 
         /*
         public static void TestDrawLine(IntPtr img, int startX, int startY, int endX, int endY, MCvScalar color)

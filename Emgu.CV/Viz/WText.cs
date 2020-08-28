@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
-#if ! (NETFX_CORE || NETSTANDARD1_4 || __ANDROID__ || __IOS__ || UNITY_IOS || UNITY_ANDROID )
+#if ! ( UNITY_IOS || UNITY_ANDROID )
 
 using System;
 using System.Runtime.InteropServices;
@@ -57,9 +57,11 @@ namespace Emgu.CV
         protected override void DisposeObject()
         {
             if (!IntPtr.Zero.Equals(_ptr))
-                CvInvoke.cveViz3dRelease(ref _ptr);
-            _widgetPtr = IntPtr.Zero;
-            _widget2dPtr = IntPtr.Zero;
+            {
+                CvInvoke.cveWTextRelease(ref _ptr);
+                _widgetPtr = IntPtr.Zero;
+                _widget2dPtr = IntPtr.Zero;
+            }
         }
     }
 

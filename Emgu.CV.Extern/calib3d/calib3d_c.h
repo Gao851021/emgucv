@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.
 //
 //----------------------------------------------------------------------------
 
@@ -43,6 +43,15 @@ CVAPI(void) cveTriangulatePoints(cv::_InputArray* projMat1, cv::_InputArray* pro
 CVAPI(void) cveCorrectMatches(cv::_InputArray* f, cv::_InputArray* points1, cv::_InputArray* points2, cv::_OutputArray* newPoints1, cv::_OutputArray* newPoints2);
 
 CVAPI(bool) cveFindChessboardCornersSB(cv::_InputArray* image, CvSize* patternSize, cv::_OutputArray* corners, int flags);
+
+CVAPI(void) cveEstimateChessboardSharpness(
+	cv::_InputArray* image, 
+	CvSize* patternSize, 
+	cv::_InputArray* corners,
+	float riseDistance, 
+	bool vertical,
+	cv::_OutputArray* sharpness, 
+	CvScalar* result);
 
 CVAPI(void) cveDrawChessboardCorners(cv::_InputOutputArray* image, CvSize* patternSize, cv::_InputArray* corners, bool patternWasFound);
 

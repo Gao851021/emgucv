@@ -1,19 +1,22 @@
-# - Try to find the gmcs and gacutil
+# - Try to find the csharp compilers and utilities
 #
 # defines
 #
-# CSharp_FOUND - system has mono, mcs, gmcs and gacutil
-# GMCS_PATH - where to find 'gmcs'
-# GACUTIL_PATH - where to find 'gacutil'
+# AL_EXECUTABLE - Path to the 'al' command
+# CSC_EXECUTABLE - Path to the csharp compiler
+# DOTNET_EXECUTABLE - Path to the 'dotnet' command
+# DOTNET_FOUND - If 'dotnet' command is found
+# GACUTIL_EXECUTABLE - Path to the 'gacutil'
+# MSBUILD_EXECUTABLE - Path to 'msbuild'
 #
 # copyright (c) 2007 Arno Rehn arno@arnorehn.de
 #
 # Redistribution and use is allowed according to the terms of the GPL license.
 #
 # Modified by canming to find .NET on Windows
-# copyright (c) 2009 - 2012 Canming Huang support@emgu.com
+# copyright (c) 2009 - 2019 Canming Huang support@emgu.com
 
-#IF(WIN32)
+
 SET (PROGRAM_FILES_X86_ENV_STR "programfiles(x86)")
 
 FIND_PROGRAM (CSC_EXECUTABLE_20 
@@ -25,7 +28,7 @@ $ENV{windir}/Microsoft.NET/Framework/v2.0.50727/
 )
 
 FIND_PROGRAM (MSBUILD_EXECUTABLE_20 
-NAMES msbuild xbuild
+NAMES msbuild 
 PATHS
 $ENV{windir}/Microsoft.NET/Framework/v2.0.50727/
 "C:/WINDOWS/Microsoft.NET/Framework/v2.0.50727"
@@ -103,25 +106,30 @@ MESSAGE(STATUS "MSBUILD_EXECUTABLE_140 : ${MSBUILD_EXECUTABLE_140}")
 FIND_PROGRAM (CSC_EXECUTABLE_150 
 NAMES csc 
 PATHS
-"$ENV{${PROGRAM_FILES_X86_ENV_STR}}/Microsoft Visual Studio/2017/Community/MSBuild/15.0/Bin/Roslyn")
+"$ENV{${PROGRAM_FILES_X86_ENV_STR}}/Microsoft Visual Studio/2017/Community/MSBuild/15.0/Bin/Roslyn"
+"$ENV{${PROGRAM_FILES_X86_ENV_STR}}/Microsoft Visual Studio/2017/Enterprise/MSBuild/15.0/Bin/Roslyn"
+)
 MESSAGE(STATUS "CSC_EXECUTABLE_150: ${CSC_EXECUTABLE_150}")
 
 FIND_PROGRAM (MSBUILD_EXECUTABLE_150 
 NAMES msbuild 
 PATHS
-"$ENV{${PROGRAM_FILES_X86_ENV_STR}}/Microsoft Visual Studio/2017/Community/MSBuild/15.0/Bin")
+"$ENV{${PROGRAM_FILES_X86_ENV_STR}}/Microsoft Visual Studio/2017/Community/MSBuild/15.0/Bin"
+"$ENV{${PROGRAM_FILES_X86_ENV_STR}}/Microsoft Visual Studio/2017/Enterprise/MSBuild/15.0/Bin")
 MESSAGE(STATUS "MSBUILD_EXECUTABLE_150 : ${MSBUILD_EXECUTABLE_150}")
 
 FIND_PROGRAM (CSC_EXECUTABLE_160 
 NAMES csc 
 PATHS
-"$ENV{${PROGRAM_FILES_X86_ENV_STR}}/Microsoft Visual Studio/2019/Community/MSBuild/Current/Bin/Roslyn")
+"$ENV{${PROGRAM_FILES_X86_ENV_STR}}/Microsoft Visual Studio/2019/Community/MSBuild/Current/Bin/Roslyn"
+"$ENV{${PROGRAM_FILES_X86_ENV_STR}}/Microsoft Visual Studio/2019/Enterprise/MSBuild/Current/Bin/Roslyn")
 
 MESSAGE(STATUS "CSC_EXECUTABLE_160: ${CSC_EXECUTABLE_160}")
 FIND_PROGRAM (MSBUILD_EXECUTABLE_160 
 NAMES msbuild 
 PATHS
-"$ENV{${PROGRAM_FILES_X86_ENV_STR}}/Microsoft Visual Studio/2019/Community/MSBuild/Current/Bin")
+"$ENV{${PROGRAM_FILES_X86_ENV_STR}}/Microsoft Visual Studio/2019/Community/MSBuild/Current/Bin"
+"$ENV{${PROGRAM_FILES_X86_ENV_STR}}/Microsoft Visual Studio/2019/Enterprise/MSBuild/Current/Bin")
 MESSAGE(STATUS "MSBUILD_EXECUTABLE_160 : ${MSBUILD_EXECUTABLE_160}")
 
 
@@ -214,6 +222,12 @@ ENDIF()
 #FIND_PROGRAM (MSBUILD_EXECUTABLE xbuild)
 #ENDIF(WIN32)
 
+IF (MSBUILD_EXECUTABLE)
+  SET (MSBUILD_FOUND TRUE)
+ELSE()
+  SET (MSBUILD_FOUND FALSE)
+ENDIF()  
+
 
 FIND_PROGRAM (GACUTIL_EXECUTABLE gacutil 
 "$ENV{${PROGRAM_FILES_X86_ENV_STR}}/Microsoft SDKs/Windows/v10.0A/bin/NETFX 4.6.1 Tools"
@@ -275,13 +289,24 @@ FIND_PROGRAM (RESGEN_EXECUTABLE resgen
 /Library/Frameworks/Mono.framework/Commands/
 )
 
-FIND_PROGRAM(DOTNET_EXECUTABLE dotnet)
-  
-SET (CSharp_FOUND FALSE)
+FIND_PROGRAM(DOTNET_EXECUTABLE dotnet
+/usr/local/share/dotnet)
 IF (DOTNET_EXECUTABLE)
-  SET (CSharp_FOUND TRUE)
+  SET (DOTNET_FOUND TRUE)
+ELSE()
+  SET (DOTNET_FOUND FALSE)
+ENDIF()  
+
+FIND_PROGRAM(VSTOOL_EXECUTABLE vstool
+"/Applications/Visual Studio.app/Contents/MacOS"
+)
+IF (VSTOOL_EXECUTABLE)
+  SET (VSTOOL_FOUND TRUE)
+ELSE()
+  SET (VSTOOL_FOUND FALSE)
 ENDIF()
 
+SET (CSharp_FOUND FALSE)
 IF (CSC_EXECUTABLE AND AL_EXECUTABLE AND RESGEN_EXECUTABLE AND MSBUILD_EXECUTABLE)
   SET (CSharp_FOUND TRUE)
 ENDIF ()
@@ -312,20 +337,25 @@ IF (NOT CSharp_FIND_QUIETLY)
   ELSE()
     MESSAGE(STATUS "Could not find msbuild")
   ENDIF()
+  IF (VSTOOL_EXECUTABLE)
+    MESSAGE(STATUS "Found vstool: ${VSTOOL_EXECUTABLE}")
+  ELSE()
+    MESSAGE(STATUS "Could not find vstool")
+  ENDIF()
   IF(DOTNET_EXECUTABLE)
-    MESSAGE(STATUS "FOUND dotnet: ${DOTNET_EXECUTABLE}")
+    MESSAGE(STATUS "Found dotnet: ${DOTNET_EXECUTABLE}")
   ELSE()
     MESSAGE(STATUS "Could not find dotnet")
   ENDIF()
 ENDIF (NOT CSharp_FIND_QUIETLY)
 
-IF (CSharp_FOUND)
-ELSE (CSharp_FOUND)
+IF (CSharp_FOUND OR DOTNET_FOUND)
+ELSE()
   IF (CSharp_FIND_REQUIRED)
     MESSAGE(FATAL_ERROR "Could not find one or more of the following programs: csc, gacutil, al, resgen, msbuild, dotnet")
-  ENDIF (CSharp_FIND_REQUIRED)
-ENDIF (CSharp_FOUND)
+  ENDIF() 
+ENDIF()
 
-MARK_AS_ADVANCED(CSC_EXECUTABLE AL_EXECUTABLE GACUTIL_EXECUTABLE MSBUILD_EXECUTABLE DOTNET_EXECUTABLE)
+MARK_AS_ADVANCED(CSC_EXECUTABLE VSTOOL_EXECUTABLE AL_EXECUTABLE GACUTIL_EXECUTABLE MSBUILD_EXECUTABLE DOTNET_EXECUTABLE DOTNET_FOUND MSBUILD_FOUND VSTOOLS_FOUND)
 
 

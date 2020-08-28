@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
 using System;
@@ -123,8 +123,9 @@ namespace Emgu.CV.Cuda
         /// <param name="rowRange">The row range. Use MCvSlice.WholeSeq for all rows.</param>
         /// <returns>Pointer to the GpuMat</returns>
         [DllImport(CvInvoke.ExternCudaLibrary, CallingConvention = CvInvoke.CvCallingConvention, EntryPoint = "gpuMatGetRegion")]
-        public static extern IntPtr GetRegion(IntPtr gpuMat, ref Range rowRange, ref Range colRange);
+        public static extern IntPtr GetRegion(IntPtr gpuMat, ref Emgu.CV.Structure.Range rowRange, ref Emgu.CV.Structure.Range colRange);
 
+        /*
         /// <summary>
         /// Resize the GpuMat
         /// </summary>
@@ -134,6 +135,7 @@ namespace Emgu.CV.Cuda
         /// <param name="stream">Use a Stream to call the function asynchronously (non-blocking) or IntPtr.Zero to call the function synchronously (blocking).</param>     
         [DllImport(CvInvoke.ExternCudaLibrary, CallingConvention = CvInvoke.CvCallingConvention, EntryPoint = "gpuMatResize")]
         public static extern void GpuMatResize(IntPtr src, IntPtr dst, CvEnum.Inter interpolation, IntPtr stream);
+        */
 
         /// <summary>
         /// gpuMatReshape the src GpuMat  
@@ -1027,6 +1029,7 @@ namespace Emgu.CV.Cuda
         /// <param name="maxValue">Maximum value to use with CV_THRESH_BINARY and CV_THRESH_BINARY_INV thresholding types</param>
         /// <param name="thresholdType">Thresholding type</param>
         /// <param name="stream">Use a Stream to call the function asynchronously (non-blocking) or null to call the function synchronously (blocking).</param>
+        /// <returns>The computed threshold value if Otsu's or Triangle methods used.</returns>
         public static double Threshold(IInputArray src, IOutputArray dst, double threshold, double maxValue, CvEnum.ThresholdType thresholdType, Stream stream = null)
         {
             using (InputArray iaSrc = src.GetInputArray())

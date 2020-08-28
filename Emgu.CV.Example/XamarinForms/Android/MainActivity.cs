@@ -28,6 +28,7 @@ namespace Emgu.CV.XamarinForms.Droid
         protected override void OnCreate(Bundle bundle)
         {
             base.OnCreate(bundle);
+            Xamarin.Essentials.Platform.Init(this, bundle); // add this line to your code, it may also be called: bundle
 
             global::Xamarin.Forms.Forms.Init(this, bundle);
 
@@ -54,7 +55,7 @@ namespace Emgu.CV.XamarinForms.Droid
         }
 
 
-        private static Mat GetImageFromTask(Task<MediaFile> task, int maxWidth, int maxHeight)
+        private static Mat ToMat(Task<MediaFile> task, int maxWidth, int maxHeight)
         {
             MediaFile file = GetResultFromTask(task);
             if (file == null)
@@ -80,7 +81,7 @@ namespace Emgu.CV.XamarinForms.Droid
             {
                 if (bmp.Width <= maxWidth && bmp.Height <= maxHeight && rotation == 0)
                 {
-                    return new Mat(bmp);
+                    return bmp.ToMat();
                 }
                 else
                 {
@@ -96,7 +97,7 @@ namespace Emgu.CV.XamarinForms.Droid
 
                         using (Bitmap scaled = Bitmap.CreateBitmap(bmp, 0, 0, bmp.Width, bmp.Height, matrix, true))
                         {
-                            return new Mat(scaled);
+                            return scaled.ToMat();
                         }
                     }
                 }
@@ -123,7 +124,9 @@ namespace Emgu.CV.XamarinForms.Droid
 
         public override void OnRequestPermissionsResult(int requestCode, string[] permissions, Android.Content.PM.Permission[] grantResults)
         {
-            Plugin.Permissions.PermissionsImplementation.Current.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+            Xamarin.Essentials.Platform.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+
+            base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
         }
     }
 }

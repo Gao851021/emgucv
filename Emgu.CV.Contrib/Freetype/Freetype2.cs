@@ -1,8 +1,6 @@
 //----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
-
-#if !(__IOS__ || UNITY_IPHONE) 
 
 using System;
 using System.Collections.Generic;
@@ -13,7 +11,6 @@ using Emgu.CV.Util;
 using System.Diagnostics;
 using System.Drawing;
 using Emgu.CV.CvEnum;
-
 
 namespace Emgu.CV.Freetype
 {
@@ -177,4 +174,3 @@ namespace Emgu.CV.Freetype
             
     }
 }
-#endif

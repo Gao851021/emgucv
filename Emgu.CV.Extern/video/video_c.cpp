@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.
 //
 //----------------------------------------------------------------------------
 
@@ -150,15 +150,17 @@ void cveCamShift(cv::_InputArray* probImage, CvRect* window, CvTermCriteria* cri
 {
 	cv::Rect rect = *window;
 	cv::RotatedRect rr = cv::CamShift(*probImage, rect, *criteria);
-	*window = rect;
-	*result = rr;
+	*window = cvRect(rect);
+	result->center = cvPoint2D32f(rr.center.x, rr.center.y);
+	result->size = cvSize2D32f(rr.size.width, rr.size.height);
+	result->angle = rr.angle;
 }
 
 int cveMeanShift(cv::_InputArray* probImage, CvRect* window, CvTermCriteria* criteria)
 {
 	cv::Rect rect = *window;
 	int result = cv::meanShift(*probImage, rect, *criteria);
-	*window = rect;
+	*window = cvRect(rect);
 	return result;
 }
 

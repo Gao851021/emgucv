@@ -1,5 +1,5 @@
 ﻿//----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
 using System;
@@ -16,9 +16,7 @@ namespace Emgu.CV
    /// <summary>
    /// The Affine3 matrix, double precision. 
    /// </summary>
-#if !(NETFX_CORE || NETSTANDARD1_4)
    [DebuggerTypeProxy(typeof(Affine3d.DebuggerProxy))]
-#endif
    public class Affine3d : UnmanagedObject
    {
       /// <summary>

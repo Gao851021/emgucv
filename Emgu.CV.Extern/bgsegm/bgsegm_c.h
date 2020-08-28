@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.
 //
 //----------------------------------------------------------------------------
 
@@ -9,7 +9,21 @@
 #define EMGU_BGSEGM_C_H
 
 #include "opencv2/core/core_c.h"
+#ifdef HAVE_OPENCV_BGSEGM
 #include "opencv2/bgsegm.hpp"
+#else
+static inline CV_NORETURN void throw_no_bgsegm() { CV_Error(cv::Error::StsBadFunc, "The library is compiled without bgsegm module support"); }
+namespace cv {
+	class BackgroundSubtractor {};
+	namespace bgsegm {
+		class BackgroundSubtractorMOG {};
+		class BackgroundSubtractorGMG {};
+		class BackgroundSubtractorCNT {};
+		class BackgroundSubtractorGSOC {};
+		class BackgroundSubtractorLSBP {};
+	}
+}
+#endif
 
 //BackgroundSubtractorMOG
 CVAPI(cv::bgsegm::BackgroundSubtractorMOG*) cveBackgroundSubtractorMOGCreate(int history, int nmixtures, double backgroundRatio, double noiseSigma, cv::BackgroundSubtractor** bgSubtractor, cv::Algorithm** algorithm, cv::Ptr<cv::bgsegm::BackgroundSubtractorMOG>** sharedPtr);

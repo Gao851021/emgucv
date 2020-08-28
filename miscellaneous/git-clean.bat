@@ -29,12 +29,6 @@ cd ..
 
 cd Emgu.CV.Extern
 
-cd cvblob
-cd libcvblob
-git clean -d -f -x "." 
-cd ..
-cd ..
-
 cd tesseract
 cd libtesseract
 
@@ -54,6 +48,18 @@ cd ..
 
 cd ..
 
+IF NOT "%1%"=="--keep_binary" GOTO CLEAN_ALL
+
+:KEEP_BINARY
+move libs opencv\
 git clean -d -f -x "." 
+move opencv\libs .\
+GOTO END_OF_CLEAN
+
+:CLEAN_ALL
+git clean -d -f -x "." 
+
+:END_OF_CLEAN
+
 
 popd

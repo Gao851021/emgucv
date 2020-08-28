@@ -1,115 +1,97 @@
 ﻿//----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Text;
 using System.IO;
 using System.Drawing;
 using System.Threading.Tasks;
-#if __ANDROID__
-using Android.App;
-using Android.Content;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
-using Android.OS;
-using Android.Graphics;
-using Android.Preferences;
-#endif
-
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
+using Emgu.Models;
 using Emgu.Util;
 using FaceDetection;
 
 namespace Emgu.CV.XamarinForms
 {
-   public class FaceDetectionPage : ButtonTextImagePage
-   {
-      public FaceDetectionPage()
-         : base()
-      {
+    public class FaceDetectionPage : ButtonTextImagePage
+    {
+        public FaceDetectionPage()
+           : base()
+        {
 
-         var button = this.GetButton();
-         button.Text = "Perform Face Detection";
-         button.Clicked += OnButtonClicked;
+            var button = this.GetButton();
+            button.Text = "Perform Face Detection";
+            button.Clicked += OnButtonClicked;
 
-         OnImagesLoaded += async (sender, image) =>
-         {
-            if (image == null || image [0] == null)
-               return;
-            SetMessage( "Please wait..." );
+        }
+
+        private void DownloadManager_OnDownloadProgressChanged(object sender, System.Net.DownloadProgressChangedEventArgs e)
+        {
+            if (e.TotalBytesToReceive <= 0)
+                SetMessage(String.Format("{0} bytes downloaded.", e.BytesReceived));
+            else
+                SetMessage(String.Format("{0} of {1} bytes downloaded ({2}%)", e.BytesReceived, e.TotalBytesToReceive, e.ProgressPercentage));
+
+        }
+
+        private CascadeClassifier _faceCascadeClassifier = null;
+        private CascadeClassifier _eyeCascadeClassifier = null;
+
+        private async Task InitDetector()
+        {
+            if (_faceCascadeClassifier == null && _eyeCascadeClassifier == null)
+            {
+                FileDownloadManager downloadManager = new FileDownloadManager();
+                String url = "https://github.com/opencv/opencv/raw/4.2.0/data/haarcascades/";
+                downloadManager.AddFile(url + "/haarcascade_frontalface_default.xml", "haarcascade");
+                downloadManager.AddFile(url + "/haarcascade_eye.xml", "haarcascade");
+
+                downloadManager.OnDownloadProgressChanged += DownloadManager_OnDownloadProgressChanged;
+
+                await downloadManager.Download();
+                String faceFile = downloadManager.Files[0].LocalFile;
+                String eyeFile = downloadManager.Files[1].LocalFile;
+                _faceCascadeClassifier = new CascadeClassifier(faceFile);
+                _eyeCascadeClassifier = new CascadeClassifier(eyeFile);
+            }
+        }
+
+        private async void OnButtonClicked(Object sender, EventArgs args)
+        {
+            Mat[] images = await LoadImages(new string[] { "lena.jpg" });
+            if (images == null || images[0] == null)
+                return;
+            SetMessage("Please wait...");
+            //SetImage(image[0]);
             SetImage(null);
-            Task<Tuple<Mat, long>> t = new Task<Tuple<Mat, long>>(
-               () =>
-               {
-                  String faceFile;
-                  String eyeFile;
-                  bool fileOk = CheckCascadeFile("haarcascade_frontalface_default.xml", "haarcascade_eye.xml",
-                     out faceFile,
-                     out eyeFile);
 
-                  long time;
-                  List<Rectangle> faces = new List<Rectangle>();
-                  List<Rectangle> eyes = new List<Rectangle>();
+            await InitDetector();
 
-                  using (UMat img = image[0].GetUMat(AccessType.ReadWrite))
-                     DetectFace.Detect(img, faceFile, eyeFile, faces, eyes, out time);
+            long time;
+            List<Rectangle> faces = new List<Rectangle>();
+            List<Rectangle> eyes = new List<Rectangle>();
 
-                  foreach (Rectangle rect in faces)
-                     CvInvoke.Rectangle(image[0], rect, new MCvScalar(0, 0, 255), 2);
-                  foreach (Rectangle rect in eyes)
-                     CvInvoke.Rectangle(image[0], rect, new MCvScalar(255, 0, 0), 2);
+            using (UMat img = images[0].GetUMat(AccessType.ReadWrite))
+                DetectFace.Detect(img, _faceCascadeClassifier, _eyeCascadeClassifier, faces, eyes, out time);
 
-                  return new Tuple<Mat, long>(image[0], time);
-               });
-            t.Start();
+            //Draw the faces in red
+            foreach (Rectangle rect in faces)
+                CvInvoke.Rectangle(images[0], rect, new MCvScalar(0, 0, 255), 2);
 
-            var result = await t;
-            SetImage(t.Result.Item1);
+            //Draw the eyes in blue
+            foreach (Rectangle rect in eyes)
+                CvInvoke.Rectangle(images[0], rect, new MCvScalar(255, 0, 0), 2);
+
             String computeDevice = CvInvoke.UseOpenCL ? "OpenCL: " + Ocl.Device.Default.Name : "CPU";
+            SetMessage(String.Format("Detected with {1} in {0} milliseconds.", time, computeDevice));
 
-            SetMessage(String.Format("Detected with {1} in {0} milliseconds.", t.Result.Item2, computeDevice));
-         };
-      }
+            SetImage(images[0]);
+        }
 
-      private void OnButtonClicked(Object sender, EventArgs args)
-      {
-         LoadImages(new string[] { "lena.jpg" });
-      }
-
-      bool CheckCascadeFile(String face, String eye, out String faceFile, out String eyeFile)
-      {
-#if __ANDROID__
-         ISharedPreferences preference = PreferenceManager.GetDefaultSharedPreferences(Android.App.Application.Context);
-         String appVersion = Android.App.Application.Context.PackageManager.GetPackageInfo(Android.App.Application.Context.PackageName, Android.Content.PM.PackageInfoFlags.Activities).VersionName;
-         if (!preference.Contains("cascade-data-version") || !preference.GetString("cascade-data-version", null).Equals(appVersion)
-            || !(preference.Contains("cascade-eye-data-path") || preference.Contains("cascade-face-data-path")))
-         {
-            AndroidFileAsset.OverwriteMethod overwriteMethod = AndroidFileAsset.OverwriteMethod.AlwaysOverwrite;
-
-            FileInfo eyeFileTmp = AndroidFileAsset.WritePermanantFileAsset(Android.App.Application.Context, eye, "cascade", overwriteMethod);
-            FileInfo faceFileTmp = AndroidFileAsset.WritePermanantFileAsset(Android.App.Application.Context, face, "cascade", overwriteMethod);
-
-            //save data path
-            ISharedPreferencesEditor editor = preference.Edit();
-            editor.PutString("cascade-data-version", appVersion);
-            editor.PutString("cascade-eye-data-path", eyeFileTmp.FullName);
-            editor.PutString("cascade-face-data-path", faceFileTmp.FullName);
-            editor.Commit();
-         }
-
-         eyeFile = preference.GetString("cascade-eye-data-path", null);
-         faceFile = preference.GetString("cascade-face-data-path", null);
-         return File.Exists(eyeFile) && File.Exists(faceFile);
-#else
-         faceFile = face;
-         eyeFile = eye;
-         return true;
-#endif
-      }
-   }
+    }
 }

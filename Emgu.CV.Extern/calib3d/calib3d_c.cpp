@@ -111,6 +111,22 @@ bool cveFindChessboardCornersSB(cv::_InputArray* image, CvSize* patternSize, cv:
 	return cv::findChessboardCornersSB(*image, *patternSize, *corners, flags);
 }
 
+void cveEstimateChessboardSharpness(
+	cv::_InputArray* image,
+	CvSize* patternSize,
+	cv::_InputArray* corners,
+	float riseDistance,
+	bool vertical,
+	cv::_OutputArray* sharpness,
+	CvScalar* result)
+{
+	cv::Scalar r = cv::estimateChessboardSharpness(*image, *patternSize, *corners, riseDistance, vertical, sharpness ? *sharpness : (cv::OutputArray) cv::noArray()) ;
+	result->val[0] = r.val[0];
+	result->val[1] = r.val[1];
+	result->val[2] = r.val[2];
+	result->val[3] = r.val[3];
+}
+
 void cveDrawChessboardCorners(cv::_InputOutputArray* image, CvSize* patternSize, cv::_InputArray* corners, bool patternWasFound)
 {
 	cv::drawChessboardCorners(*image, *patternSize, *corners, patternWasFound);
@@ -149,8 +165,8 @@ void cveStereoRectify(
 	cv::Rect rect1, rect2;
 	cv::stereoRectify(*cameraMatrix1, *distCoeffs1, *cameraMatrix2, *distCoeffs2, *imageSize, *r, *t, *r1, *r2,
 		*p1, *p2, *q, flags, alpha, *newImageSize, &rect1, &rect2);
-	*validPixROI1 = rect1;
-	*validPixROI2 = rect2;
+	*validPixROI1 = cvRect(rect1);
+	*validPixROI2 = cvRect(rect2);
 }
 
 void cveRodrigues(cv::_InputArray* src, cv::_OutputArray* dst, cv::_OutputArray* jacobian)

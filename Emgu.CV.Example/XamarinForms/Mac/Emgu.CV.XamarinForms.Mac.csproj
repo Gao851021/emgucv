@@ -1,14 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\..\..\nugetpackages\Xamarin.Forms.4.1.0.673156\build\Xamarin.Forms.props" Condition="Exists('..\..\..\nugetpackages\Xamarin.Forms.4.1.0.673156\build\Xamarin.Forms.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProjectGuid>{96567EEA-17C0-4E56-ACDE-3EF6213E6AF3}</ProjectGuid>
     <ProjectTypeGuids>{A3F8F2AB-B479-4A4A-A458-A89E7DC349F1};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <OutputType>Exe</OutputType>
-    <RootNamespace>OSX</RootNamespace>
-    <AssemblyName>OSX</AssemblyName>
+    <RootNamespace>MacOS</RootNamespace>
+    <AssemblyName>MacOS</AssemblyName>
     <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
     <MonoMacResourcePrefix>Resources</MonoMacResourcePrefix>
     <TargetFrameworkIdentifier>Xamarin.Mac</TargetFrameworkIdentifier>
@@ -94,18 +93,6 @@
       <HintPath Condition="Exists('/Library/Frameworks/Xamarin.Mac.framework/Versions/Current/lib/mono/Xamarin.Mac/Facades/netstandard.dll')">/Library/Frameworks/Xamarin.Mac.framework/Versions/Current/lib/mono/Xamarin.Mac/Facades/netstandard.dll</HintPath>
       <!-- HintPath for Windows -->
       <HintPath Condition="Exists('$(TargetFrameworkRootPath)\Xamarin.Mac\v2.0\Facades\netstandard.dll')">$(TargetFrameworkRootPath)\Xamarin.Mac\v2.0\Facades\netstandard.dll</HintPath>
-    </Reference>    
-    <Reference Include="Xamarin.Forms.Core">
-      <HintPath>..\..\..\nugetpackages\Xamarin.Forms.4.1.0.673156\lib\Xamarin.Mac\Xamarin.Forms.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="Xamarin.Forms.Platform">
-      <HintPath>..\..\..\nugetpackages\Xamarin.Forms.4.1.0.673156\lib\Xamarin.Mac\Xamarin.Forms.Platform.dll</HintPath>
-    </Reference>
-    <Reference Include="Xamarin.Forms.Platform.macOS">
-      <HintPath>..\..\..\nugetpackages\Xamarin.Forms.4.1.0.673156\lib\Xamarin.Mac\Xamarin.Forms.Platform.macOS.dll</HintPath>
-    </Reference>
-    <Reference Include="Xamarin.Forms.Xaml">
-      <HintPath>..\..\..\nugetpackages\Xamarin.Forms.4.1.0.673156\lib\Xamarin.Mac\Xamarin.Forms.Xaml.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -117,19 +104,19 @@
       <Link>haarcascade_frontalface_default.xml</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\..\FaceDetection\lena.jpg">
+    <Content Include="..\Core\lena.jpg">
       <Link>lena.jpg</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\..\FeatureMatching\box.png">
+    <Content Include="..\Core\box.png">
       <Link>box.png</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\..\FeatureMatching\box_in_scene.png">
+    <Content Include="..\Core\box_in_scene.png">
       <Link>box_in_scene.png</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\..\PedestrianDetection\pedestrian.png">
+    <Content Include="..\Core\pedestrian.png">
       <Link>pedestrian.png</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -140,6 +127,13 @@
     <Content Include="..\Core\dog416.png">
       <Link>dog416.png</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Core\stop-sign.jpg">
+      <Link>stop-sign.jpg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Core\pic3.png">
+      <Link>pic3.png</Link>
     </Content>
   </ItemGroup>
   <ItemGroup>
@@ -162,7 +156,6 @@
   <ItemGroup>
     <None Include="Info.plist" />
     <None Include="Entitlements.plist" />
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Main.cs" />
@@ -175,12 +168,21 @@
   <ItemGroup>
     <InterfaceDefinition Include="Main.storyboard" />
   </ItemGroup>
-  <Import Project="..\..\..\Emgu.CV.Contrib\Emgu.CV.Contrib.projitems" Label="Shared" Condition="Exists('..\..\..\Emgu.CV.Contrib\Emgu.CV.Contrib.projitems')" />
-  <Import Project="..\..\..\Emgu.CV.OCR\Emgu.CV.OCR.projitems" Label="Shared" Condition="Exists('..\..\..\Emgu.CV.OCR\Emgu.CV.OCR.projitems')" />
-  <Import Project="..\..\..\Emgu.CV\Emgu.CV.projitems" Label="Shared" Condition="Exists('..\..\..\Emgu.CV\Emgu.CV.projitems')" />
-  <Import Project="..\..\..\Emgu.CV.Cuda\Emgu.CV.Cuda.projitems" Label="Shared" Condition="Exists('..\..\..\Emgu.CV.Cuda\Emgu.CV.Cuda.projitems')" />
+  <ItemGroup>
+    <PackageReference Include="Xamarin.Forms">
+      <Version>4.8.0.1269</Version>
+    </PackageReference>
+    <PackageReference Include="Xamarin.Plugin.FilePicker">
+      <Version>2.1.41</Version>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Emgu.CV.Platform\NetStandard\Emgu.CV.Platform.NetStandard.csproj">
+      <Project>{AFA9D3CF-62EB-47A8-BC3D-BC9006D495F9}</Project>
+      <Name>Emgu.CV.Platform.NetStandard</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="..\..\..\Emgu.CV.Runtime\Mac\Emgu.CV.Runtime.Mac.projitems" Label="Shared" Condition="Exists('..\..\..\Emgu.CV.Runtime\Mac\Emgu.CV.Runtime.Mac.projitems')" />
   <Import Project="..\Core\Emgu.CV.XamarinForms.projitems" Label="Shared" Condition="Exists('..\Core\Emgu.CV.XamarinForms.projitems')" />
-  <Import Project="..\..\..\Emgu.Util\Emgu.Util.projitems" Label="Shared" Condition="Exists('..\..\..\Emgu.Util\Emgu.Util.projitems')" />
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Mac\Xamarin.Mac.CSharp.targets" />
-  <Import Project="..\..\..\nugetpackages\Xamarin.Forms.4.1.0.673156\build\Xamarin.Forms.targets" Condition="Exists('..\..\..\nugetpackages\Xamarin.Forms.4.1.0.673156\build\Xamarin.Forms.targets')" />
 </Project>

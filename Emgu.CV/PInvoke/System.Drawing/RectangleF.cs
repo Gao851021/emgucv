@@ -1,8 +1,8 @@
 //----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
-#if (UNITY_WSA)
+#if (UNITY_WSA || UNITY_STANDALONE_WIN)
 using System;
 using System.Runtime.InteropServices;
 
@@ -11,9 +11,7 @@ namespace System.Drawing
    /// <summary>
    /// Managed structure equivalent to CvRect
    /// </summary>
-#if !(NETFX_CORE || NETSTANDARD1_4)
    [Serializable]
-#endif
    [StructLayout(LayoutKind.Sequential)]
    public struct RectangleF :IEquatable<RectangleF>
    {

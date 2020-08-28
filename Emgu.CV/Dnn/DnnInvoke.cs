@@ -1,8 +1,7 @@
 ﻿//----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
-#if !( NETFX_CORE || NETSTANDARD1_4)
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -427,6 +426,28 @@ namespace Emgu.CV.Dnn
         [DllImport(CvInvoke.ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]
         private static extern void cveDnnWriteTextGraph(IntPtr model, IntPtr output);
 
+
+        /// <summary>
+        /// Performs non maximum suppression given boxes and corresponding scores.
+        /// </summary>
+        /// <param name="bboxes">A set of bounding boxes to apply NMS.</param>
+        /// <param name="scores">A set of corresponding confidences.</param>
+        /// <param name="scoreThreshold">A threshold used to filter boxes by score.</param>
+        /// <param name="nmsThreshold">A threshold used in non maximum suppression.</param>
+        /// <param name="eta">A coefficient in adaptive threshold</param>
+        /// <param name="topK">If &gt;0, keep at most top_k picked indices.</param>
+        /// <returns>The indices of the boxes to keep after NMS</returns>
+        public static int[] NMSBoxes(Rectangle[] bboxes, float[] scores, float scoreThreshold, float nmsThreshold, float eta = 1.0f, int topK = 0)
+        {
+            using(VectorOfRect vBoxes = new VectorOfRect(bboxes))
+            using(VectorOfFloat vScores = new VectorOfFloat(scores))
+            using (VectorOfInt indices = new VectorOfInt())
+            {
+                NMSBoxes(vBoxes, vScores, scoreThreshold, nmsThreshold, indices, eta, topK);
+                return indices.ToArray();
+            }
+        }
+
         /// <summary>
         /// Performs non maximum suppression given boxes and corresponding scores.
         /// </summary>
@@ -455,23 +476,25 @@ namespace Emgu.CV.Dnn
         /// <summary>
         /// Get the list of available DNN Backends
         /// </summary>
-        /// <returns>The available backend and target pair</returns>
-        public static BackendTargetPair[] GetAvailableBackends()
+        public static BackendTargetPair[] AvailableBackends
         {
-            using (VectorOfInt viBackends = new VectorOfInt())
-            using (VectorOfInt viTargets = new VectorOfInt())
+            get
             {
-                cveDNNGetAvailableBackends(viBackends, viTargets);
-                int[] backendArr = viBackends.ToArray();
-                int[] targetArr = viTargets.ToArray();
-
-                BackendTargetPair[] availableBackends = new BackendTargetPair[backendArr.Length];
-                for (int i = 0; i < backendArr.Length; i++)
+                using (VectorOfInt viBackends = new VectorOfInt())
+                using (VectorOfInt viTargets = new VectorOfInt())
                 {
-                    availableBackends[i] = new BackendTargetPair((Backend) backendArr[i], (Target) targetArr[i]);
-                }
+                    cveDNNGetAvailableBackends(viBackends, viTargets);
+                    int[] backendArr = viBackends.ToArray();
+                    int[] targetArr = viTargets.ToArray();
 
-                return availableBackends;
+                    BackendTargetPair[] availableBackends = new BackendTargetPair[backendArr.Length];
+                    for (int i = 0; i < backendArr.Length; i++)
+                    {
+                        availableBackends[i] = new BackendTargetPair((Backend) backendArr[i], (Target) targetArr[i]);
+                    }
+
+                    return availableBackends;
+                }
             }
         }
 
@@ -479,5 +502,3 @@ namespace Emgu.CV.Dnn
         private static extern void cveDNNGetAvailableBackends(IntPtr backends, IntPtr targets);
     }
 }
-
-#endif

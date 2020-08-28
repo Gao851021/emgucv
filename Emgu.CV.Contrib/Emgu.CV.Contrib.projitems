@@ -9,6 +9,7 @@
     <Import_RootNamespace>Emgu.CV.Contrib</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Alphamat\*.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Dpm\*.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Saliency\*.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)XFeatures2D\*.cs" />
@@ -32,5 +33,8 @@
 	<Compile Include="$(MSBuildThisFileDirectory)Quality\*.cs" />
 	<Compile Include="$(MSBuildThisFileDirectory)Stereo\*.cs" />
 	<Compile Include="$(MSBuildThisFileDirectory)SurfaceMatching\*.cs" />
+	<Compile Include="$(MSBuildThisFileDirectory)DnnSuperres\*.cs" />
+	<Compile Include="$(MSBuildThisFileDirectory)IntensityTransform\*.cs" />
+	<Compile Include="$(MSBuildThisFileDirectory)Rapid\*.cs" />
   </ItemGroup>
 </Project>

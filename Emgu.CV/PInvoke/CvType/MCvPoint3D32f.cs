@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
 using System;
@@ -10,9 +10,7 @@ namespace Emgu.CV.Structure
     /// <summary>
     /// Managed Structure equivalent to CvPoint3D32f
     /// </summary>
-#if !(NETFX_CORE || NETSTANDARD1_4)
     [Serializable]
-#endif
     [StructLayout(LayoutKind.Sequential)]
     public struct MCvPoint3D32f : IEquatable<MCvPoint3D32f>
     {

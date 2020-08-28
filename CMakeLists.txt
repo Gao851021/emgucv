@@ -1,5 +1,5 @@
 # --------------------------------------------------------
-# Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.
+# Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.
 # 
 # Root CMake file for Emgu CV
 #
@@ -10,6 +10,7 @@
 
 PROJECT(emgucv)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.1)
+cmake_policy(SET CMP0022 NEW)
 
 IF( WIN32 OR ANDROID OR APPLE OR NETFX_CORE)
 	SET(EMGU_CV_WITH_FREETYPE ON CACHE BOOL "BUILD FREETYPE")
@@ -90,15 +91,20 @@ IF (EMGU_CV_WITH_FREETYPE)
   ELSEIF(WIN32 OR APPLE)
 	MESSAGE(STATUS "Setting up freetype for Windows / Mac")
 	    SET(FREETYPE_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/freetype2/include")
-		SET(FREETYPE_LIBRARIES "freetype")
+		SET(FREETYPE_LIBRARIES "freetype" CACHE INTERNAL "")
+		SET(FREETYPE_LINK_LIBRARIES_XXXXX ON)
+		SET(FREETYPE_LINK_LIBRARIES "freetype")
 		SET(FREETYPE_LIBRARY "freetype")
 		ADD_SUBDIRECTORY(freetype2)
-		FIND_PACKAGE(freetype)
+		FIND_PACKAGE(Freetype)
 		SET(FREETYPE_FOUND ON)
 		
 		SET(HB_HAVE_FREETYPE ON)
 		SET(HARFBUZZ_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/harfbuzz/src")
-		SET(HARFBUZZ_LIBRARIES "harfbuzz")
+		SET(HARFBUZZ_LIBRARIES "harfbuzz" CACHE INTERNAL "")
+		SET(HARFBUZZ_LINK_LIBRARIES_XXXXX ON)
+		SET(HARFBUZZ_LINK_LIBRARIES "harfbuzz")
+		SET(HARFBUZZ_LIBRARY "harfbuzz")
 		ADD_SUBDIRECTORY(harfbuzz)
 		SET(HARFBUZZ_FOUND ON)
 		
@@ -106,6 +112,15 @@ IF (EMGU_CV_WITH_FREETYPE)
   ENDIF()
 ELSE()
   SET(FREETYPE_LIBRARY "")
+ENDIF()
+
+IF("${CMAKE_SYSTEM_NAME}" STREQUAL "Emscripten")
+  SET(CMAKE_C_FLAGS_RELEASE "-flto ${CMAKE_C_FLAGS_RELEASE}")
+  SET(CMAKE_CXX_FLAGS_RELEASE "-flto ${CMAKE_CXX_FLAGS_RELEASE}")
+  SET(CMAKE_C_FLAGS_DEBUG "-flto ${CMAKE_C_FLAGS_DEBUG}")
+  SET(CMAKE_CXX_FLAGS_DEBUG "-flto ${CMAKE_CXX_FLAGS_DEBUG}")
+  SET(CMAKE_EXE_LINKER_FLAGS "-flto ${CMAKE_EXE_LINKER_FLAGS}")
+  SET(CMAKE_SHARED_LINKER_FLAGS "-flto ${CMAKE_SHARED_LINKER_FLAGS}")
 ENDIF()
 
 IF( NOT (NETFX_CORE OR ANDROID OR IOS ) )
@@ -123,9 +138,8 @@ IF( NOT (NETFX_CORE OR ANDROID OR IOS ) )
     SET(BUILD_SHARED_LIBS OFF)
     SET(CMAKE_EXPORT_NO_PACKAGE_REGISTRY ON)
     
-    ADD_SUBDIRECTORY(vtk) # always build vtk as static library
-	
-    
+    #ADD_SUBDIRECTORY(vtk) # always build vtk as static library
+	    
     SET(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_CACHE})
   ENDIF()
   #  IF (NOT WIN32)
@@ -139,20 +153,22 @@ SET(OPENCV_CONTRIB_SUBFOLDER ${CMAKE_CURRENT_SOURCE_DIR}/opencv_contrib)
 SET(OPENCV_EXTRA_SUBFOLDER ${CMAKE_CURRENT_SOURCE_DIR}/opencv_extra)
 
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
-#IF (NOT ANDROID)
   
-  SET(CSC_PREFERRED_VERSION "4.0")
-  IF((NOT NETFX_CORE) AND MSVC) 
-    #SET CSC 3.5 as the prefered compiler for EMGU CV
-    SET(CSC_TARGET_FRAMEWORK "3.5" CACHE STRING "C#  target framework")
-  ELSE()
-    #SET CSC 4.5 (in the .Net framework 4.0 folder) as the prefered compiler for EMGU CV
-    SET(CSC_TARGET_FRAMEWORK "" CACHE STRING "C# target framework")
-  ENDIF()
+SET(CSC_PREFERRED_VERSION "4.0")
+IF((NOT NETFX_CORE) AND MSVC) 
+  #SET CSC 3.5 as the prefered compiler for EMGU CV
+  SET(CSC_TARGET_FRAMEWORK "3.5" CACHE STRING "C#  target framework")
+ELSE()
+  #SET CSC 4.5 (in the .Net framework 4.0 folder) as the prefered compiler for EMGU CV
+  SET(CSC_TARGET_FRAMEWORK "" CACHE STRING "C# target framework")
+ENDIF()
   
-  FIND_PACKAGE(CSharp REQUIRED)
-  INCLUDE (CSharpMacros)
-#ENDIF()
+FIND_PACKAGE(CSharp REQUIRED)
+INCLUDE (CSharpMacros)
+INCLUDE (CheckPlatform)
+IF ( (IS_UBUNTU OR IS_RASPBIAN) AND NOT (DOTNET_FOUND))
+  MESSAGE(FATAL_ERROR "dotnet core is required to build Emgu CV on Ubuntu, please follow the instructions to install dotnet core on Ubuntu: https://dotnet.microsoft.com/download/linux-package-manager/ubuntu18-04/sdk-current")  
+ENDIF()
 
 INCLUDE (CheckTargetArch)
 INCLUDE (OpenCVVersion)
@@ -190,31 +206,7 @@ ENDIF()
 # ----------------------------------------------------------------------------
 CHECK_TARGET_ARCH()
 
-IF (WIN32)
-  MESSAGE(STATUS "CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
-  IF(TARGET_ARCH_64)
-    SET(EMGUCV_ARCH win64)
-  ELSE()
-    #ELSEIF ( ("${CMAKE_SYSTEM_NAME}" STREQUAL "WindowsPhone") OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "WindowsStore") )
-    MESSAGE(STATUS "CMAKE_GENERATOR: ${CMAKE_GENERATOR}")
-    STRING(FIND "${CMAKE_GENERATOR}" "ARM" IS_ARM)
-    IF(IS_ARM GREATER -1)
-      SET(EMGUCV_ARCH arm)
-    ELSE()
-	  STRING(FIND "${CMAKE_GENERATOR_PLATFORM}" "ARM" IS_ARM)
-	  IF(IS_ARM GREATER -1)
-        SET(EMGUCV_ARCH arm)
-	  ELSE()
-        SET(EMGUCV_ARCH win32)
-	  ENDIF()
-    ENDIF()
-    #ELSE()
-    #  SET(EMGUCV_ARCH win32)
-  ENDIF()
-ELSE(WIN32)
-  SET(EMGUCV_ARCH ${CMAKE_SYSTEM_NAME})
-ENDIF(WIN32)
-
+SET(EMGUCV_ARCH ${TARGET_ARCH_NAME})
 MESSAGE(STATUS "Building for ${EMGUCV_ARCH}")
 
 IF(WIN32 AND CV_ICC)
@@ -224,7 +216,7 @@ IF(WIN32 AND CV_ICC)
   STRING(REGEX REPLACE "/O2" ${CV_ICC_ADDITIONAL_FLAGS_RELEASE} CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
   SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:\"libcmt\"")
   SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /NODEFAULTLIB:\"libcmt\"")
-  set(EMGUCV_PLATFORM_TOOLSET "Intel C++ Compiler 19.0" CACHE STRING "Platform toolset for Visual Studio")
+  set(EMGUCV_PLATFORM_TOOLSET "Intel C++ Compiler 19.1" CACHE STRING "Platform toolset for Visual Studio")
 ENDIF()
 
 IF(WIN32 AND NOT MINGW)
@@ -248,48 +240,59 @@ ENDIF()
 IF(ANDROID)
   SET(UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER "/android/${ANDROID_ABI}")
 ELSEIF(WIN32)
+#  MESSAGE(STATUS "===============>  EMGUCV_ARCH: ${EMGUCV_ARCH}")
+#  MESSAGE(STATUS "===============>  CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
+#  MESSAGE(STATUS "===============>  CMAKE_SYSTEM_VERSION: ${CMAKE_SYSTEM_VERSION}")
+#  MESSAGE(STATUS "===============>  CMAKE_GENERATOR: ${CMAKE_GENERATOR}")
+#  MESSAGE(STATUS "===============>  CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
+#  MESSAGE(STATUS "===============>  MSVC_C_ARCHITECTURE_ID: ${MSVC_C_ARCHITECTURE_ID}") 
   IF ("${EMGUCV_ARCH}" STREQUAL "win64")
-    IF("${CMAKE_SYSTEM_NAME}" STREQUAL "WindowsStore")
-      IF(CMAKE_SYSTEM_VERSION MATCHES 8.1)
-	SET(UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER "/store8_1/x64")
-      ELSE()
-	SET(UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER "/UWP/x64")
-      ENDIF()
+    IF("${CMAKE_SYSTEM_NAME}" STREQUAL "WindowsStore" AND (CMAKE_SYSTEM_VERSION MATCHES 10.0))
+	  SET(UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER "/UWP/x64")
     ELSE()
       SET(UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER "/x64")
     ENDIF()
-  ELSEIF("${EMGUCV_ARCH}" STREQUAL "arm")
-    IF("${CMAKE_SYSTEM_NAME}" STREQUAL "WindowsPhone")
-      #SET(UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER "/phone8_1/arm")
+  ELSEIF("${EMGUCV_ARCH}" STREQUAL "arm64")
+    IF("${CMAKE_SYSTEM_NAME}" STREQUAL "WindowsStore" AND (CMAKE_SYSTEM_VERSION MATCHES 10.0))
+	  SET(UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER "/UWP/arm64")
     ELSE()
-      IF(CMAKE_SYSTEM_VERSION MATCHES 10.0)
-	SET(UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER "/UWP/arm")
-      ELSE()
-	SET(UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER "/arm")
-      ENDIF()
+	  SET(UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER "/arm64")
+    ENDIF()
+  ELSEIF("${EMGUCV_ARCH}" STREQUAL "arm")
+    IF("${CMAKE_SYSTEM_NAME}" STREQUAL "WindowsStore" AND (CMAKE_SYSTEM_VERSION MATCHES 10.0))
+	  SET(UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER "/UWP/arm")
+    ELSE()
+	  SET(UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER "/arm")
     ENDIF()
   ELSE()
-    IF("${CMAKE_SYSTEM_NAME}" STREQUAL "WindowsPhone")
-      #SET(UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER "/phone8_1/x86")
-    ELSEIF("${CMAKE_SYSTEM_NAME}" STREQUAL "WindowsStore")
-      IF(CMAKE_SYSTEM_VERSION MATCHES 10.0)
-	SET(UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER "/UWP/x86")
-      ELSE()
-	SET(UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER "/store8_1/x86")
-      ENDIF()
-    ELSE()
-      SET(UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER "/x86")
-    ENDIF()
+    IF("${CMAKE_SYSTEM_NAME}" STREQUAL "WindowsStore" AND (CMAKE_SYSTEM_VERSION MATCHES 10.0))
+	#IF("${CMAKE_SYSTEM_NAME}" STREQUAL "WindowsStore")
+    #  IF(CMAKE_SYSTEM_VERSION MATCHES 10.0)
+	  SET(UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER "/UWP/x86")    
+	ELSE()
+	  SET(UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER "/x86")
+	ENDIF()
   ENDIF()
-  #ELSEIF(APPLE)
-  #  SET(UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER "/lib")
+  #MESSAGE(STATUS ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
+  #MESSAGE(STATUS ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> EMGUCV_ARCH: ${EMGUCV_ARCH}")
+  #MESSAGE(STATUS ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER: ${UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER}")
 ELSEIF(APPLE AND NOT IOS)
   SET(UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER "/osx")
+ELSEIF("${EMGUCV_ARCH}" STREQUAL "ubuntu_x64")
+  SET(UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER "/x64")
+ELSEIF("${EMGUCV_ARCH}" STREQUAL "ubuntu_x86")
+  SET(UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER "/x86")
+ELSEIF("${EMGUCV_ARCH}" STREQUAL "raspbian_arm")
+  SET(UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER "/arm")
+ELSEIF("${EMGUCV_ARCH}" STREQUAL "arm64")
+  SET(UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER "/arm64")
+ELSEIF("${EMGUCV_ARCH}" STREQUAL "arm")
+  SET(UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER "/arm")  
 ELSE()
   SET(UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER "")
 ENDIF()
 
-SET(UNMANAGED_LIBRARY_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/libs/${UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER}")
+SET(UNMANAGED_LIBRARY_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/libs${UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER}")
 IF(ANDROID)
   SET(LIBRARY_OUTPUT_PATH ${UNMANAGED_LIBRARY_OUTPUT_PATH})
 ENDIF()
@@ -307,11 +310,11 @@ MACRO(CHECK_BINARY_EXIST folder pattern property_name second_check)
       LIST(APPEND UNMANAGED_DLL_EXTRA ${DLL_LIST})
       MESSAGE(STATUS "Including the following files in package: ${DLL_LIST}")
       INSTALL(
-	FILES
-	${DLL_LIST}
-	DESTINATION ${folder}
-	COMPONENT emgucv_binary
-	)  
+	   FILES
+	   ${DLL_LIST}
+	   DESTINATION ${folder}
+	   COMPONENT emgucv_binary
+	   )  
       SET(${property_name} ON)
     ELSE()
       SET(${property_name} ${second_check})
@@ -334,52 +337,51 @@ IF(IOS)
     SET(IS_IOS_I386_BUILD ON)
     MESSAGE(STATUS "IS_IOS_I386_BUILD: ${IS_IOS_I386_BUILD}")
   ENDIF()
-  CHECK_BINARY_EXIST("libs/iOS" "libcvextern_i386.a" HAVE_IOS_I386 ${IS_IOS_I386_BUILD})
+  #CHECK_BINARY_EXIST("libs/iOS" "libcvextern_i386.a" HAVE_IOS_I386 ${IS_IOS_I386_BUILD})
   
   SET(IS_IOS_X86_64_BUILD OFF)
   IF(IS_IOS_BUILD AND ("${IOS_ARCH}" STREQUAL "x86_64"))
     SET(IS_IOS_X86_64_BUILD ON)
     MESSAGE(STATUS "IS_IOS_X86_64_BUILD: ${IS_IOS_X86_64_BUILD}")
   ENDIF()
-  CHECK_BINARY_EXIST("libs/iOS" "libcvextern_x86_64.a" HAVE_IOS_X86_64 ${IS_IOS_X86_64_BUILD})
+  #CHECK_BINARY_EXIST("libs/iOS" "libcvextern_x86_64.a" HAVE_IOS_X86_64 ${IS_IOS_X86_64_BUILD})
   
   SET(IS_IOS_ARMV7S_BUILD OFF)
   IF(IS_IOS_BUILD AND ("${IOS_ARCH}" STREQUAL "armv7s"))
     SET(IS_IOS_ARMV7S_BUILD ON)
     MESSAGE(STATUS "IS_IOS_ARMV7S_BUILD: ${IS_IOS_ARMV7S_BUILD}")
   ENDIF()
-  CHECK_BINARY_EXIST("libs/iOS" "libcvextern_armv7s.a" HAVE_IOS_ARMV7S ${IS_IOS_ARMV7S_BUILD})
+  #CHECK_BINARY_EXIST("libs/iOS" "libcvextern_armv7s.a" HAVE_IOS_ARMV7S ${IS_IOS_ARMV7S_BUILD})
   
   SET(IS_IOS_ARMV7_BUILD OFF)
   IF(IS_IOS_BUILD AND ("${IOS_ARCH}" STREQUAL "armv7"))
     SET(IS_IOS_ARMV7_BUILD ON)
     MESSAGE(STATUS "IS_IOS_ARMV7_BUILD: ${IS_IOS_ARMV7_BUILD}")
   ENDIF()
-  CHECK_BINARY_EXIST("libs/iOS" "libcvextern_armv7.a" HAVE_IOS_ARMV7 ${IS_IOS_ARMV7_BUILD})
+  #CHECK_BINARY_EXIST("libs/iOS" "libcvextern_armv7.a" HAVE_IOS_ARMV7 ${IS_IOS_ARMV7_BUILD})
   
   SET(IS_IOS_ARM64_BUILD OFF)
   IF(IS_IOS_BUILD AND ("${IOS_ARCH}" STREQUAL "arm64"))
     SET(IS_IOS_ARM64_BUILD ON)
     MESSAGE(STATUS "IS_IOS_ARM64_BUILD: ${IS_IOS_ARM64_BUILD}")
   ENDIF()
-  CHECK_BINARY_EXIST("libs/iOS" "libcvextern_arm64.a" HAVE_IOS_ARM64 ${IS_IOS_ARM64_BUILD})
-  
+  #CHECK_BINARY_EXIST("libs/iOS" "libcvextern_arm64.a" HAVE_IOS_ARM64 ${IS_IOS_ARM64_BUILD})
 ENDIF()
 CHECK_BINARY_EXIST("libs/iOS" "libcvextern.a" HAVE_IOS ${IS_IOS_BUILD})
 
-IF(NOT HAVE_IOS)
-  IF(HAVE_IOS_I386 OR HAVE_IOS_X86_64 OR HAVE_IOS_ARMV7S OR HAVE_IOS_ARMV7 OR HAVE_IOS_ARM64)
-    SET(HAVE_IOS ON) 
-  ENDIF()
-ENDIF()
+#IF(NOT HAVE_IOS)
+#  IF(HAVE_IOS_I386 OR HAVE_IOS_X86_64 OR HAVE_IOS_ARMV7S OR HAVE_IOS_ARMV7 OR HAVE_IOS_ARM64)
+#    SET(HAVE_IOS ON) 
+#  ENDIF()
+#ENDIF()
 
-SET(HAVE_IOS_ALL_ARCH OFF)
-IF(HAVE_IOS_I386 AND HAVE_IOS_X86_64 AND HAVE_IOS_ARMV7S AND HAVE_IOS_ARMV7 AND HAVE_IOS_ARM64)
-  SET(HAVE_IOS_ALL_ARCH ON) 
-ENDIF()
-IF(HAVE_IOS_ALL_ARCH)
-  MESSAGE(STATUS "HAVE_IOS_ALL_ARCH: ${HAVE_IOS_ALL_ARCH}")
-ENDIF()
+#SET(HAVE_IOS_ALL_ARCH OFF)
+#IF(HAVE_IOS_I386 AND HAVE_IOS_X86_64 AND HAVE_IOS_ARMV7S AND HAVE_IOS_ARMV7 AND HAVE_IOS_ARM64)
+#  SET(HAVE_IOS_ALL_ARCH ON) 
+#ENDIF()
+#IF(HAVE_IOS_ALL_ARCH)
+#  MESSAGE(STATUS "HAVE_IOS_ALL_ARCH: ${HAVE_IOS_ALL_ARCH}")
+#ENDIF()
 
 IF(HAVE_IOS)
   MESSAGE(STATUS "HAVE_IOS: ON")
@@ -468,6 +470,13 @@ IF(("${CMAKE_SYSTEM_NAME}" STREQUAL "WindowsStore") AND (CMAKE_SYSTEM_VERSION MA
 ENDIF()
 CHECK_BINARY_EXIST("libs/UWP/arm" "*.dll" HAVE_WINSTORE_10_ARM ${IS_WINSTORE_10_ARM_BUILD})
 
+SET(IS_WINSTORE_10_ARM64_BUILD OFF)
+IF(("${CMAKE_SYSTEM_NAME}" STREQUAL "WindowsStore") AND (CMAKE_SYSTEM_VERSION MATCHES 10.0) AND ("${EMGUCV_ARCH}" STREQUAL "arm64"))
+  SET(IS_WINSTORE_10_ARM64_BUILD ON)
+  MESSAGE(STATUS "IS_WINSTORE_10_ARM64_BUILD: ${IS_WINSTORE_10_ARM64_BUILD}")
+ENDIF()
+CHECK_BINARY_EXIST("libs/UWP/arm64" "*.dll" HAVE_WINSTORE_10_ARM64 ${IS_WINSTORE_10_ARM64_BUILD})
+
 SET(IS_WINDESKTOP_X86_BUILD OFF)
 IF (WIN32 AND ("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows") AND ("${EMGUCV_ARCH}" STREQUAL "win32") AND (NOT ANDROID)) 
   SET (IS_WINDESKTOP_X86_BUILD ON)
@@ -481,6 +490,25 @@ IF (WIN32 AND ("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows") AND ("${EMGUCV_ARCH}" 
   MESSAGE(STATUS "IS_WINDESKTOP_X64_BUILD: ${IS_WINDESKTOP_X64_BUILD}")
 ENDIF()
 CHECK_BINARY_EXIST("libs/x64" "*.dll" HAVE_WINDESKTOP_X64 ${IS_WINDESKTOP_X64_BUILD})
+
+SET(IS_RASPBIAN_BUILD OFF)
+IF (IS_RASPBIAN) 
+  SET (IS_RASPBIAN_BUILD ON)
+  MESSAGE(STATUS "IS_RASPBIAN_BUILD: ${IS_RASPBIAN_BUILD}")
+ENDIF()
+CHECK_BINARY_EXIST("libs/arm" "*.so" HAVE_LINUX_ARM ${IS_RASPBIAN_BUILD})
+
+SET(IS_UBUNTU_X86_BUILD OFF)
+IF (("${TARGET_ARCH_NAME}" STREQUAL "ubuntu_x86")) 
+  MESSAGE(STATUS "IS_UBUNTU_X86_BUILD: ${IS_UBUNTU_X86_BUILD}")
+ENDIF()
+CHECK_BINARY_EXIST("libs/x86" "*.so" HAVE_LINUX_X86 ${IS_UBUNTU_X86_BUILD})
+
+SET(IS_UBUNTU_X64_BUILD OFF)
+IF (("${TARGET_ARCH_NAME}" STREQUAL "ubuntu_x64")) 
+  MESSAGE(STATUS "IS_UBUNTU_X64_BUILD: ${IS_UBUNTU_X64_BUILD}")
+ENDIF()
+CHECK_BINARY_EXIST("libs/x64" "*.so" HAVE_LINUX_X64 ${IS_UBUNTU_X64_BUILD})
  
   IF(HAVE_WINDESKTOP_X86 AND HAVE_WINDESKTOP_X64)
     SET(WINDESKTOP_LABEL "-windesktop") 
@@ -502,8 +530,16 @@ CHECK_BINARY_EXIST("libs/x64" "*.dll" HAVE_WINDESKTOP_X64 ${IS_WINDESKTOP_X64_BU
   IF(HAVE_WINSTORE_10_ARM)	
     SET(WINSTORE_10_LABEL "${WINSTORE_10_LABEL}_arm")
   ENDIF()
+  IF(HAVE_WINSTORE_10_ARM64)	
+    SET(WINSTORE_10_LABEL "${WINSTORE_10_LABEL}_arm64")
+  ENDIF()
   
-  IF("${WINSTORE_10_LABEL}" STREQUAL "_x64_x86_arm")
+  SET(HAVE_WINSTORE_10 OFF)
+  IF(HAVE_WINSTORE_10_X86 OR HAVE_WINSTORE_10_X64 OR HAVE_WINSTORE_10_ARM OR HAVE_WINSTORE_10_ARM64)
+    SET(HAVE_WINSTORE_10 ON)
+  ENDIF()
+  
+  IF("${WINSTORE_10_LABEL}" STREQUAL "_x64_x86_arm_arm64")
     SET(WINSTORE_10_LABEL "-UWP")
   ELSEIF(NOT ("${WINSTORE_10_LABEL}" STREQUAL ""))
     SET(WINSTORE_10_LABEL "-UWP${WINSTORE_10_LABEL}")
@@ -521,9 +557,14 @@ CHECK_BINARY_EXIST("libs/x64" "*.dll" HAVE_WINDESKTOP_X64 ${IS_WINDESKTOP_X64_BU
   
   SET(OSX_LABEL "")
   IF(HAVE_OSX)
-    SET(OSX_LABEL "-osx")
+    SET(OSX_LABEL "-macos")
   ENDIF()	
 
+IF (IS_RASPBIAN_BUILD OR IS_UBUNTU_X64_BUILD OR IS_UBUNTU_X86_BUILD OR HAVE_LINUX_ARM OR HAVE_LINUX_X64 OR HAVE_LINUX_X86)
+  SET(HAVE_LINUX ON)
+ELSE()
+  SET(HAVE_LINUX OFF)
+ENDIF()
 
 SET(ANDROID_LABEL "")
 IF(HAVE_ANDROID_ARM64_V8A)
@@ -549,7 +590,23 @@ ELSEIF(NOT ("${ANDROID_LABEL}" STREQUAL ""))
   SET(ANDROID_LABEL "-android${ANDROID_LABEL}")
 ENDIF()
 
-CHECK_BINARY_EXIST("libs" "Emgu.CV.World*" HAVE_PREBUILD_EMGU_CV_WORLD OFF)
+#CHECK_BINARY_EXIST("libs" "Emgu.CV.World*" HAVE_PREBUILD_EMGU_CV_WORLD OFF)
+CHECK_BINARY_EXIST("libs" "Emgu.CV.Platform.IOS.*" HAVE_PREBUILD_EMGU_CV_IOS OFF)
+#IF(HAVE_PREBUILD_EMGU_CV_IOS)
+#  INSTALL(
+#	FILES
+#	"${CMAKE_SOURCE_DIR}/libs/Emgu.CV.Platform.IOS.dll"
+#	"${CMAKE_SOURCE_DIR}/libs/Emgu.CV.Platform.IOS.xml"
+#	DESTINATION "libs/"
+#	COMPONENT emgucv_binary
+#	)
+#ENDIF()
+
+IF (HAVE_IOS AND (NOT HAVE_OSX) AND (NOT HAVE_ANDROID) AND (NOT HAVE_WINSTORE_10) AND (NOT (HAVE_WINDESKTOP_X86 OR HAVE_WINDESKTOP_X64)) AND (NOT HAVE_LINUX))
+  SET(HAVE_IOS_ONLY ON)
+ELSE()
+  SET(HAVE_IOS_ONLY OFF)
+ENDIF()
 
 # ----------------------------------------------------------------------------
 #  Setup Package information
@@ -562,7 +619,7 @@ SET(PACKAGE_NAME "${PROJECT_NAME}")
 #SET(CPACK_PACKAGE_NAME "${PACKAGE_NAME}")
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Emgu CV is a cross platform .Net wrapper to the OpenCV image processing library.")
 
-SET(CPACK_PACKAGE_NAME "${PACKAGE_NAME}${IOS_LABEL}${ANDROID_LABEL}${WINDOWS_LABEL}${OSX_LABEL}")
+SET(CPACK_PACKAGE_NAME "${PACKAGE_NAME}${IOS_LABEL}${ANDROID_LABEL}${OSX_LABEL}${WINDOWS_LABEL}")
 
 #STRING(LENGTH "${CPACK_PACKAGE_NAME}" PACKAGE_NAME_LENGTH)
 #IF (${PACKAGE_NAME_LENGTH} GREATER 30)
@@ -586,15 +643,19 @@ IF(CV_ICC)
   SET(CPACK_PACKAGE_NAME "${CPACK_PACKAGE_NAME}-icc")
 ENDIF()
 
-IF(WITH_TBB)
-  SET(CPACK_PACKAGE_NAME "${CPACK_PACKAGE_NAME}-tbb")
-ENDIF()
+#IF(WITH_TBB)
+#  SET(CPACK_PACKAGE_NAME "${CPACK_PACKAGE_NAME}-tbb")
+#ENDIF()
 
 IF(WITH_IPP)
   SET(CPACK_PACKAGE_NAME "${CPACK_PACKAGE_NAME}-ipp")
 ENDIF()
 
-IF("${CPACK_PACKAGE_NAME}" STREQUAL "${PACKAGE_NAME}-ios-android-windows-osx-icc-tbb-ipp")
+IF(WITH_INF_ENGINE)
+  SET(CPACK_PACKAGE_NAME "${CPACK_PACKAGE_NAME}-dldt")
+ENDIF()
+
+IF("${CPACK_PACKAGE_NAME}" STREQUAL "${PACKAGE_NAME}-ios-android-macos-windows-ipp-dldt")
   SET(CPACK_PACKAGE_NAME "${PACKAGE_NAME}-pro")
 ENDIF()
 
@@ -613,18 +674,21 @@ ENDIF()
 MESSAGE(STATUS "Package name will be ${CPACK_PACKAGE_NAME}")
 FILE(WRITE "emgucv.version.txt" "${CPACK_PACKAGE_VERSION}")
 
+MATH(EXPR CPACK_PACKAGE_VERSION_PATCH_PLUS_ONE "${CPACK_PACKAGE_VERSION_PATCH}+1")
+SET(CPACK_PACKAGE_DEPENDENCY_VERSION "[${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}.0,${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH_PLUS_ONE}.0)")
+
 #IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Emgu.CV.Commercial.License.txt")
 #  SET(LICENSE_FILE_NAME "Emgu.CV.Commercial.License.txt")
 #ELSE()
-SET(LICENSE_FILE_NAME "Emgu.CV.License.txt")
+SET(LICENSE_FILE_NAME "LICENSE")
 
 SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/${LICENSE_FILE_NAME}")
 
-IF (WIN32 OR APPLE)
-  SET(CPACK_PACKAGE_CLI_FOLDER bin)
-ELSE ()
-  SET(CPACK_PACKAGE_CLI_FOLDER lib/cli/${PACKAGE_NAME}-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR})
-ENDIF()
+#IF (WIN32 OR APPLE OR ANDROID)
+SET(CPACK_PACKAGE_CLI_FOLDER libs)
+#ELSE ()
+#  SET(CPACK_PACKAGE_CLI_FOLDER lib/cli/${PACKAGE_NAME}-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR})
+#ENDIF()
 
 # ----------------------------------------------------------------------------
 #  Build opencv and Emgu.CV.Extern
@@ -687,9 +751,9 @@ SET (OPENCV_MODULE_NAME_CANDIDATES
   photo superres  
   videostab shape
   cudev  
-  text face ximgproc xobjdetect xfeatures2d xphoto bgsegm optflow
-  stitching latentsvm tracking plot
-  dnn dnn_objdetect aruco fuzzy viz bioinspired
+  face ximgproc xobjdetect xfeatures2d xphoto bgsegm optflow
+  stitching latentsvm plot
+  dnn dnn_objdetect dnn_superres aruco fuzzy viz bioinspired text tracking
   dpm
   saliency
   dnn_modern
@@ -700,6 +764,9 @@ SET (OPENCV_MODULE_NAME_CANDIDATES
   quality
   stereo
   surface_matching
+  alphamat
+  intensity_transform
+  rapid
   )
 
 FOREACH(OPENCV_MODULE_NAME ${OPENCV_MODULE_NAME_CANDIDATES})
@@ -730,6 +797,7 @@ ELSE()
   SET(EMGU_ENABLE_SSE ON CACHE BOOL "ENABLE SSE for Emgu CV")
 ENDIF()
 ADD_SUBDIRECTORY(Emgu.CV.Extern)
+ADD_SUBDIRECTORY(Emgu.CV.NativeImage)
 
 IF(NOT (ANDROID OR IOS OR NETFX_CORE))
   ENABLE_TESTING()
@@ -752,26 +820,30 @@ SET(EMGU_CV_EXAMPLE_BUILD ON CACHE BOOL "Build Emgu CV Example")
 # ----------------------------------------------------------------------------
 INCLUDE(Today)
 TODAY() #set the variable CURRENT_YEAR
+
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CommonAssemblyInfo.cs.in ${CMAKE_CURRENT_SOURCE_DIR}/CommonAssemblyInfo.cs)
+
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Directory.Build.props.in ${CMAKE_CURRENT_SOURCE_DIR}/Directory.Build.props)
 
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.rc.in ${CMAKE_CURRENT_SOURCE_DIR}/Emgu.CV.Extern/version.rc)
 
+SET (EMGUCV_LICENSE_FILE "${LICENSE_FILE_NAME}.txt")
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/${LICENSE_FILE_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/${EMGUCV_LICENSE_FILE} COPYONLY)
+
 MACRO(CHECK_LICENSE_TYPE)
-	MESSAGE(STATUS "LICENSE FILE: ${CMAKE_CURRENT_SOURCE_DIR}/Emgu.CV.License.txt")
+	MESSAGE(STATUS "LICENSE FILE: ${CMAKE_CURRENT_SOURCE_DIR}/${LICENSE_FILE_NAME}")
     IF (WIN32)
-        EXECUTE_PROCESS(COMMAND "findstr" "gpl" "Emgu.CV.License.txt" WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE TMP)
+        EXECUTE_PROCESS(COMMAND "findstr" "gpl" "${LICENSE_FILE_NAME}" WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE TMP)
 	ELSE()	
-	    EXECUTE_PROCESS(COMMAND "grep" "gpl" "Emgu.CV.License.txt" WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE TMP)
+	    EXECUTE_PROCESS(COMMAND "grep" "gpl" "${LICENSE_FILE_NAME}" WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE TMP)
 	ENDIF()
 	
 	STRING(STRIP "${TMP}" TMP)
 	STRING(LENGTH "${TMP}" GPL_LICENSE_LENGTH)
-	SET (LICENSE_TYPE "OpenSource")
-	SET (EMGUCV_LICENSE_FILE "Emgu.CV.License.txt")
-	#SET (EMGUCV_LICENSE_URL "https://www.gnu.org/licenses/gpl-3.0.txt")
+	SET (LICENSE_TYPE "Dual License")
+	
 	IF(${GPL_LICENSE_LENGTH} EQUAL 0)
-		SET(LICENSE_TYPE "Commercial")
-		#SET (EMGUCV_LICENSE_URL "http://www.emgu.com/wiki/files/Emgu.CV.Commercial.License.4.0.pdf")
+		SET(LICENSE_TYPE "Commercial")		
 	ENDIF()
 	
 	MESSAGE(STATUS "LICENSE_TYPE: ${LICENSE_TYPE}")
@@ -781,53 +853,258 @@ CHECK_LICENSE_TYPE()
 # ----------------------------------------------------------------------------
 #  Generate neget packaging file for Emgu CV project
 # ----------------------------------------------------------------------------
-SET(EMGUCV_NUGET_ID_BASE "EMGU.CV")
-
+SET(EMGUCV_NUGET_ID "Emgu.CV")
+SET(EMGUCV_BITMAP_NUGET_ID "Emgu.CV.Bitmap")
+SET(EMGUCV_UI_NUGET_ID "Emgu.CV.UI")
+SET(EMGUCV_WINDOWS_NUGET_ID "${EMGUCV_NUGET_ID}.runtime.windows")
+#SET(
 IF(WITH_CUDA)
-	SET(EMGUCV_NUGET_ID "${EMGUCV_NUGET_ID_BASE}-CUDA")
-	SET(EMGU_CUDA_NUGET_ID "${EMGUCV_NUGET_ID_BASE}.Native")
-	SET(EMGU_CUFFT_NUGET_ID "${EMGUCV_NUGET_ID_BASE}.CUFFT")
-ELSE()
-	SET(EMGUCV_NUGET_ID "${EMGUCV_NUGET_ID_BASE}")
+	SET(EMGUCV_WINDOWS_NUGET_ID "${EMGUCV_WINDOWS_NUGET_ID}.cuda")
+	#SET(EMGUCV_NUGET_ID "${EMGUCV_NUGET_ID_BASE}-CUDA")
+	#SET(EMGU_CUDA_NUGET_ID "${EMGUCV_NUGET_ID}.Native")
+	SET(EMGU_NPP_NUGET_ID "${EMGUCV_WINDOWS_NUGET_ID}.npp")
+	SET(EMGU_CUFFT_NUGET_ID "${EMGUCV_WINDOWS_NUGET_ID}.cufft")
+	SET(EMGU_CUDNN_NUGET_ID "${EMGUCV_WINDOWS_NUGET_ID}.dnn")
+	SET(EMGU_CUDNN_CNN_NUGET_ID "${EMGUCV_WINDOWS_NUGET_ID}.dnn.cnn")
+	SET(EMGU_CUDNN_OPS_NUGET_ID "${EMGUCV_WINDOWS_NUGET_ID}.dnn.ops")
+#ELSE()
+#	SET(EMGUCV_NUGET_ID "${EMGUCV_NUGET_ID_BASE}")
+ENDIF()
+
+IF(HAVE_OSX)
+  SET(EMGUCV_MACOS_NUGET_ID "${EMGUCV_NUGET_ID}.runtime.macos")
 ENDIF()
 
 IF(HAVE_ANDROID_ALL_ARCH AND WIN32)
-	SET(EMGUCV_ANDROID_NUGET_ID "${EMGUCV_NUGET_ID_BASE}-Android")
+	SET(EMGUCV_ANDROID_NUGET_ID "${EMGUCV_NUGET_ID}.runtime.android")
 ENDIF()
 
 IF(HAVE_IOS AND WIN32)
-	SET(EMGUCV_IOS_NUGET_ID "${EMGUCV_NUGET_ID_BASE}-iOS")
+	SET(EMGUCV_IOS_NUGET_ID "${EMGUCV_NUGET_ID}.runtime.ios")
+ENDIF()
+
+IF(HAVE_WINSTORE_10 AND WIN32)
+	SET(EMGUCV_UWP_NUGET_ID "${EMGUCV_NUGET_ID}.runtime.uwp")
+ENDIF()
+
+IF(HAVE_LINUX_ARM)
+	SET(EMGUCV_RASPBIAN_NUGET_ID "${EMGUCV_NUGET_ID}.runtime.raspbian")
+ENDIF()
+
+IF(HAVE_LINUX_X64 OR HAVE_LINUX_X86)
+	SET(EMGUCV_UBUNTU_NUGET_ID "${EMGUCV_NUGET_ID}.runtime.ubuntu")
 ENDIF()
 
 IF ("${LICENSE_TYPE}" STREQUAL "Commercial")
-	MESSAGE(STATUS "Configuring nuget package for Commercial release")
-	SET(EMGUCV_NUGET_ID "${EMGUCV_NUGET_ID}-CR")
-	IF(HAVE_ANDROID_ALL_ARCH AND WIN32)
-	  SET(EMGUCV_ANDROID_NUGET_ID "${EMGUCV_ANDROID_NUGET_ID}-CR")
-	ENDIF()
-	IF(HAVE_IOS AND WIN32)
-	  SET(EMGUCV_IOS_NUGET_ID "${EMGUCV_IOS_NUGET_ID}-CR")
-	ENDIF()
+	MESSAGE(STATUS "Configuring nuget package for commercial only release")
+#	SET(EMGUCV_NUGET_ID "${EMGUCV_NUGET_ID}")
+#	IF(HAVE_OSX)
+#	  SET(EMGUCV_MACOS_NUGET_ID "${EMGUCV_MACOS_NUGET_ID}-CR")
+#	ENDIF()
+#	IF(HAVE_ANDROID_ALL_ARCH AND WIN32)
+#	  SET(EMGUCV_ANDROID_NUGET_ID "${EMGUCV_ANDROID_NUGET_ID}-CR")
+#	ENDIF()
+#	IF(HAVE_IOS AND WIN32)
+#	  SET(EMGUCV_IOS_NUGET_ID "${EMGUCV_IOS_NUGET_ID}-CR")
+#	ENDIF()
+#	IF(HAVE_WINSTORE_10 AND WIN32)
+#	  SET(EMGUCV_UWP_NUGET_ID "${EMGUCV_UWP_NUGET_ID}-CR")
+#	ENDIF()
+#	IF(HAVE_WINDESKTOP_X64 OR HAVE_WINDESKTOP_X86)
+#	  SET(EMGUCV_WINDOWS_NUGET_ID "${EMGUCV_WINDOWS_NUGET_ID}-CR")
+#	ENDIF()
+#	IF(HAVE_LINUX_ARM)
+#	  SET(EMGUCV_RASPBIAN_NUGET_ID "${EMGUCV_RASPBIAN_NUGET_ID}-CR")
+#	ENDIF()
+#    IF(HAVE_LINUX_X64 OR HAVE_LINUX_X86)
+#	  SET(EMGUCV_UBUNTU_NUGET_ID "${EMGUCV_UBUNTU_NUGET_ID}-CR")
+#	ENDIF()
 ELSEIF()
-	MESSAGE(STATUS "Configuring nuget package for Open Source release")
+	MESSAGE(STATUS "Configuring nuget package for dual license release")
+ENDIF()
+
+IF(WITH_INF_ENGINE)
+  SET(EMGUCV_WINDOWS_NUGET_ID "${EMGUCV_WINDOWS_NUGET_ID}.dldt")
+ENDIF()
+
+SET(EMGUCV_WINDOWS_NUGET_FILE_LIST "")
+IF(HAVE_WINDESKTOP_X86)
+	SET(EMGUCV_WINDOWS_NUGET_FILE_LIST "${EMGUCV_WINDOWS_NUGET_FILE_LIST} <file src=\"..\\..\\..\\libs\\x86\\*.dll\" exclude=\"..\\..\\..\\libs\\x86\\cu*.dll;..\\..\\..\\libs\\x86\\npp*.dll\" target=\"build\\x86\" />")
+ENDIF()
+IF(HAVE_WINDESKTOP_X64)
+	SET(EMGUCV_WINDOWS_NUGET_FILE_LIST "${EMGUCV_WINDOWS_NUGET_FILE_LIST} <file src=\"..\\..\\..\\libs\\x64\\*.dll\" exclude=\"..\\..\\..\\libs\\x64\\cu*.dll;..\\..\\..\\libs\\x64\\npp*.dll\" target=\"build\\x64\" />")
+	#Also added configuration files from OpenVino
+	SET(EMGUCV_WINDOWS_NUGET_FILE_LIST "${EMGUCV_WINDOWS_NUGET_FILE_LIST} <file src=\"..\\..\\..\\libs\\x64\\*.xml\" target=\"build\\x64\" />")
+	SET(EMGUCV_WINDOWS_NUGET_FILE_LIST "${EMGUCV_WINDOWS_NUGET_FILE_LIST} <file src=\"..\\..\\..\\libs\\x64\\*.json\" target=\"build\\x64\" />")
+	SET(EMGUCV_WINDOWS_NUGET_FILE_LIST "${EMGUCV_WINDOWS_NUGET_FILE_LIST} <file src=\"..\\..\\..\\libs\\x64\\*.elf\" target=\"build\\x64\" />")
+	SET(EMGUCV_WINDOWS_NUGET_FILE_LIST "${EMGUCV_WINDOWS_NUGET_FILE_LIST} <file src=\"..\\..\\..\\libs\\x64\\*.mvcmd\" target=\"build\\x64\" />")
+ENDIF()
+IF(HAVE_WINDESKTOP_X86 OR HAVE_WINDESKTOP_X64)
+	SET(EMGUCV_WINDOWS_NUGET_FILE_LIST "${EMGUCV_WINDOWS_NUGET_FILE_LIST} 
+    <file src=\"Emgu.CV.runtime.windows.targets\" target=\"build\\${EMGUCV_WINDOWS_NUGET_ID}.targets\" />
+    <file src=\"..\\..\\..\\miscellaneous\\nuget_icon.png\" target=\"icon.png\" />
+    <file src=\"..\\..\\..\\${EMGUCV_LICENSE_FILE}\" target=\"\" />")
+ENDIF()
+
+SET(EMGUCV_MACOS_NUGET_FILE_LIST "")
+IF(HAVE_OSX)
+	SET(EMGUCV_MACOS_NUGET_FILE_LIST "${EMGUCV_MACOS_NUGET_FILE_LIST} 
+    <file src=\"..\\..\\..\\libs\\osx\\*.dylib\" target=\"build\" />
+    <file src=\"Emgu.CV.runtime.macos.targets\" target=\"build\\${EMGUCV_MACOS_NUGET_ID}.targets\" />
+    <file src=\"..\\..\\..\\miscellaneous\\nuget_icon.png\" target=\"icon.png\" />
+    <file src=\"..\\..\\..\\${EMGUCV_LICENSE_FILE}\" target=\"\" />")
+	SET(EMGUCV_MACOS_NUGET_DEPENDENCY "
+    <dependencies>
+      <dependency id=\"${EMGUCV_NUGET_ID}\" version=\"[${CPACK_PACKAGE_VERSION}]\" />
+    </dependencies>")
+ENDIF()
+
+SET(EMGUCV_UWP_NUGET_FILE_LIST "")
+IF(HAVE_WINSTORE_10_X86)
+	SET(EMGUCV_UWP_NUGET_FILE_LIST "${EMGUCV_UWP_NUGET_FILE_LIST} <file src=\"..\\..\\..\\libs\\UWP\\x86\\*.dll\" target=\"build\\UWP\\x86\" />")
+ENDIF()
+IF(HAVE_WINSTORE_10_X64)
+	SET(EMGUCV_UWP_NUGET_FILE_LIST "${EMGUCV_UWP_NUGET_FILE_LIST} <file src=\"..\\..\\..\\libs\\UWP\\x64\\*.dll\" target=\"build\\UWP\\x64\" />")
+ENDIF()
+IF(HAVE_WINSTORE_10_ARM)
+	SET(EMGUCV_UWP_NUGET_FILE_LIST "${EMGUCV_UWP_NUGET_FILE_LIST} <file src=\"..\\..\\..\\libs\\UWP\\arm\\*.dll\" target=\"build\\UWP\\arm\" />")
+ENDIF()
+IF(HAVE_WINSTORE_10_ARM64)
+	SET(EMGUCV_UWP_NUGET_FILE_LIST "${EMGUCV_UWP_NUGET_FILE_LIST} <file src=\"..\\..\\..\\libs\\UWP\\arm64\\*.dll\" target=\"build\\UWP\\arm64\" />")
+ENDIF()
+IF(HAVE_WINSTORE_10)
+    SET(EMGUCV_UWP_NUGET_DEPENDENCY "
+    <dependencies>
+      <dependency id=\"${EMGUCV_NUGET_ID}\" version=\"[${CPACK_PACKAGE_VERSION}]\" />
+    </dependencies>")
+	SET(EMGUCV_UWP_NUGET_FILE_LIST "${EMGUCV_UWP_NUGET_FILE_LIST} 
+    <file src=\"Emgu.CV.runtime.uwp.targets\" target=\"build\\${EMGUCV_UWP_NUGET_ID}.targets\" />
+    <file src=\"..\\..\\..\\miscellaneous\\nuget_icon.png\" target=\"icon.png\" />
+    <file src=\"..\\..\\..\\${EMGUCV_LICENSE_FILE}\" target=\"\" />")
+ENDIF()
+
+SET(EMGUCV_RASPBIAN_NUGET_FILE_LIST "")
+IF(HAVE_LINUX_ARM)
+	SET(EMGUCV_RASPBIAN_NUGET_FILE_LIST "${EMGUCV_RASPBIAN_NUGET_FILE_LIST} 
+        <file src=\"..\\..\\..\\libs\\arm\\*.so\" target=\"build\\arm\" />")
+    SET(EMGUCV_RASPBIAN_NUGET_DEPENDENCY "    <dependencies>
+      <dependency id=\"${EMGUCV_NUGET_ID}\" version=\"[${CPACK_PACKAGE_VERSION}]\" />
+    </dependencies>")
+	SET(EMGUCV_RASPBIAN_NUGET_FILE_LIST "${EMGUCV_RASPBIAN_NUGET_FILE_LIST} 
+    <file src=\"Emgu.CV.runtime.raspbian.targets\" target=\"build\\${EMGUCV_RASPBIAN_NUGET_ID}.targets\" />
+    <file src=\"..\\..\\..\\miscellaneous\\nuget_icon.png\" target=\"icon.png\" />
+    <file src=\"..\\..\\..\\${EMGUCV_LICENSE_FILE}\" target=\"\" />")
+ENDIF()
+
+SET(EMGUCV_UBUNTU_NUGET_FILE_LIST "")
+IF(HAVE_LINUX_X64)
+  SET(EMGUCV_UBUNTU_NUGET_FILE_LIST "${EMGUCV_UBUNTU_NUGET_FILE_LIST} <file src=\"..\\..\\..\\libs\\x64\\*.so\" target=\"build\\x64\" />")
+ENDIF()
+IF(HAVE_LINUX_X86)
+  SET(EMGUCV_UBUNTU_NUGET_FILE_LIST "${EMGUCV_UBUNTU_NUGET_FILE_LIST} <file src=\"..\\..\\..\\libs\\x86\\*.so\" target=\"build\\x86\" />")
+ENDIF()
+IF(HAVE_LINUX_X64 OR HAVE_LINUX_X86)
+    SET(EMGUCV_UBUNTU_NUGET_DEPENDENCY "
+    <dependencies>
+      <dependency id=\"${EMGUCV_NUGET_ID}\" version=\"[${CPACK_PACKAGE_VERSION}]\" />
+    </dependencies>")
+	SET(EMGUCV_UBUNTU_NUGET_FILE_LIST "${EMGUCV_UBUNTU_NUGET_FILE_LIST} 
+    <file src=\"Emgu.CV.runtime.ubuntu.targets\" target=\"build\\${EMGUCV_UBUNTU_NUGET_ID}.targets\" />
+    <file src=\"..\\..\\..\\miscellaneous\\nuget_icon.png\" target=\"icon.png\" />
+    <file src=\"..\\..\\..\\${EMGUCV_LICENSE_FILE}\" target=\"\" />")
 ENDIF()
 
 SET(EMGUCV_NUGET_FILE_LIST "")
-IF(HAVE_WINDESKTOP_X86)
-	SET(EMGUCV_NUGET_FILE_LIST "${EMGUCV_NUGET_FILE_LIST} <file src=\"..\\..\\libs\\x86\\*.dll\" exclude=\"..\\..\\libs\\x86\\cu*.dll;..\\..\\libs\\x86\\npp*.dll\" target=\"build\\x86\" />")
+SET(EMGUCV_NUGET_DEPENDENCY "")
+SET(EMGUCV_NUGET_FRAMEWORK_REFERENCES "")
+
+IF (HAVE_IOS)
+  SET(EMGUCV_NUGET_FILE_LIST "${EMGUCV_NUGET_FILE_LIST} 
+    <file src=\"..\\..\\..\\libs\\iOS\\Emgu.CV.Platform.NetStandard.dll\" target=\"lib\\xamarinios10\" />
+    <file src=\"..\\..\\..\\libs\\iOS\\Emgu.CV.Platform.NetStandard.xml\" target=\"lib\\xamarinios10\" />")
+  SET(EMGUCV_NUGET_DEPENDENCY "${EMGUCV_NUGET_DEPENDENCY} 
+      <group targetFramework=\"Xamarin.iOS1.0\">
+        <dependency id=\"System.Drawing.Primitives\" version=\"4.3.0\" exclude=\"Build,Analyzers\" />
+        <dependency id=\"System.Runtime\" version=\"4.3.1\" exclude=\"Build,Analyzers\" />
+        <dependency id=\"System.Runtime.InteropServices.RuntimeInformation\" version=\"4.3.0\" exclude=\"Build,Analyzers\" />
+      </group>")
 ENDIF()
-IF(HAVE_WINDESKTOP_X64)
-	SET(EMGUCV_NUGET_FILE_LIST "${EMGUCV_NUGET_FILE_LIST} <file src=\"..\\..\\libs\\x64\\*.dll\" exclude=\"..\\..\\libs\\x64\\cu*.dll;..\\..\\libs\\x64\\npp*.dll\" target=\"build\\x64\" />")
+
+SET(EMGUCV_NUGET_FILE_LIST "${EMGUCV_NUGET_FILE_LIST} 
+    <file src=\"..\\..\\..\\libs\\Emgu.CV.Platform.NetStandard.dll\" target=\"lib\\netstandard2.0\" />
+    <file src=\"..\\..\\..\\libs\\Emgu.CV.Platform.NetStandard.xml\" target=\"lib\\netstandard2.0\" />
+    <file src=\"..\\..\\..\\miscellaneous\\nuget_icon.png\" target=\"icon.png\" />
+    <file src=\"..\\..\\..\\${EMGUCV_LICENSE_FILE}\" target=\"\" />")
+SET(EMGUCV_NUGET_DEPENDENCY "${EMGUCV_NUGET_DEPENDENCY} 
+      <group targetFramework=\".NETStandard2.0\">
+        <dependency id=\"System.Drawing.Primitives\" version=\"4.3.0\" exclude=\"Build,Analyzers\" />
+        <dependency id=\"System.Runtime\" version=\"4.3.1\" exclude=\"Build,Analyzers\" />
+        <dependency id=\"System.Runtime.InteropServices.RuntimeInformation\" version=\"4.3.0\" exclude=\"Build,Analyzers\" />
+      </group>")
+
+
+SET(EMGUCV_BITMAP_NUGET_TITLE "Bitmap extension for Emgu CV")
+SET(EMGUCV_BITMAP_NUGET_SUMMARY "This package add extension method to convert Bitmap to and from Emgu objects (e.g. Mat, UMat, GpuMat)")
+SET(EMGUCV_BITMAP_NUGET_FILE_LIST "")
+SET(EMGUCV_BITMAP_NUGET_DEPENDENCY "")
+SET(EMGUCV_BITMAP_NUGET_FILE_LIST "${EMGUCV_BITMAP_NUGET_FILE_LIST} 
+    <file src=\"..\\..\\..\\libs\\Emgu.CV.Bitmap.dll\" target=\"lib\\netstandard2.0\" />
+    <file src=\"..\\..\\..\\libs\\Emgu.CV.Bitmap.xml\" target=\"lib\\netstandard2.0\" />
+    <file src=\"..\\..\\..\\miscellaneous\\nuget_icon.png\" target=\"icon.png\" />
+    <file src=\"..\\..\\..\\${EMGUCV_LICENSE_FILE}\" target=\"\" />")
+SET(EMGUCV_BITMAP_NUGET_DEPENDENCY "${EMGUCV_BITMAP_NUGET_DEPENDENCY} 
+      <group targetFramework=\".NETStandard2.0\">
+        <dependency id=\"System.Drawing.Common\" version=\"4.7.0\" exclude=\"Build,Analyzers\" />
+        <dependency id=\"${EMGUCV_NUGET_ID}\" version=\"${CPACK_PACKAGE_DEPENDENCY_VERSION}\" />
+      </group>")
+SET(EMGUCV_BITMAP_NUGET_DEPENDENCY "
+	<dependencies>
+${EMGUCV_BITMAP_NUGET_DEPENDENCY}
+    </dependencies>")
+
+
+IF (HAVE_WINDESKTOP_X64 OR HAVE_WINDESKTOP_X86)
+  SET(EMGUCV_UI_NUGET_TITLE "Windows UI components for Emgu CV")
+  SET(EMGUCV_UI_NUGET_FILE_LIST "${EMGUCV_UI_NUGET_FILE_LIST} 
+    <file src=\"..\\..\\..\\libs\\Emgu.CV.Platform.NetFramework.dll\" target=\"lib\\net461\" />
+    <file src=\"..\\..\\..\\libs\\Emgu.CV.Platform.NetFramework.xml\" target=\"lib\\net461\" />
+    <file src=\"..\\..\\..\\libs\\Emgu.CV.Platform.NetCore.dll\" target=\"lib\\netcoreapp3.1\" />
+    <file src=\"..\\..\\..\\libs\\Emgu.CV.Platform.NetCore.xml\" target=\"lib\\netcoreapp3.1\" />
+    <file src=\"..\\..\\..\\miscellaneous\\nuget_icon.png\" target=\"icon.png\" />
+    <file src=\"..\\..\\..\\${EMGUCV_LICENSE_FILE}\" target=\"\" />
+	")
+  SET(EMGUCV_UI_NUGET_DEPENDENCY "${EMGUCV_UI_NUGET_DEPENDENCY}
+      <group targetFramework=\".NETFramework4.6.1\">
+        <dependency id=\"${EMGUCV_BITMAP_NUGET_ID}\" version=\"${CPACK_PACKAGE_DEPENDENCY_VERSION}\" />
+      </group>")
+  SET(EMGUCV_UI_NUGET_DEPENDENCY "${EMGUCV_UI_NUGET_DEPENDENCY}
+      <group targetFramework=\".NETCoreApp3.1\">
+        <dependency id=\"${EMGUCV_BITMAP_NUGET_ID}\" version=\"${CPACK_PACKAGE_DEPENDENCY_VERSION}\" />
+      </group>")
+  SET(EMGUCV_UI_NUGET_DEPENDENCY "${EMGUCV_UI_NUGET_DEPENDENCY}
+    <frameworkReferences>
+      <group targetFramework=\".NETCoreApp3.1\">
+        <frameworkReference name=\"Microsoft.WindowsDesktop.App.WindowsForms\" />
+      </group>
+    </frameworkReferences>")
+  SET(EMGUCV_UI_NUGET_DEPENDENCY "
+	<dependencies>
+${EMGUCV_UI_NUGET_DEPENDENCY}
+    </dependencies>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName=\"System.Windows.Forms\" targetFramework=\".NETFramework4.6.1\" />
+    </frameworkAssemblies>")
 ENDIF()
-IF(HAVE_WINDESKTOP_X86 OR HAVE_WINDESKTOP_X64)
-	SET(EMGUCV_NUGET_FILE_LIST "${EMGUCV_NUGET_FILE_LIST} 
-	<file src=\"Emgu.CV.targets\" target=\"build\\${EMGUCV_NUGET_ID}.targets\" />
-    <file src=\"..\\..\\libs\\Emgu.CV.World.dll\" target=\"lib\\net35\" />
-	<file src=\"..\\..\\libs\\Emgu.CV.World.XML\" target=\"lib\\net35\" />
-	<file src=\"..\\..\\libs\\Emgu.CV.UI.dll\" target=\"lib\\net35\" />
-	<file src=\"..\\..\\libs\\Emgu.CV.UI.XML\" target=\"lib\\net35\" />
-	<file src=\"..\\..\\${EMGUCV_LICENSE_FILE}\" target=\"\" />")
-ENDIF()
+
+SET(EMGUCV_NUGET_DEPENDENCY "
+	<dependencies>
+${EMGUCV_NUGET_DEPENDENCY}
+    </dependencies>")
+
+SET(EMGUCV_NUGET_FRAMEWORK_REFERENCES "
+	<frameworkReferences>
+${EMGUCV_NUGET_FRAMEWORK_REFERENCES}
+    </frameworkReferences>")
 
 SET(EMGUCV_NUGET_TITLE_ARCH "")
 IF(HAVE_WINDESKTOP_X86)
@@ -838,32 +1115,85 @@ IF(HAVE_WINDESKTOP_X64)
 ENDIF()
 STRING(STRIP "${EMGUCV_NUGET_TITLE_ARCH}" EMGUCV_NUGET_TITLE_ARCH)
 STRING(REPLACE "x86 x64" "" EMGUCV_NUGET_TITLE_ARCH "${EMGUCV_NUGET_TITLE_ARCH}")
- 
-SET(EMGUCV_NUGET_TITLE "EMGU CV ${EMGUCV_NUGET_TITLE_ARCH}")
-STRING(STRIP "${EMGUCV_NUGET_TITLE}" EMGUCV_NUGET_TITLE)
 
-SET(EMGUCV_NUGET_DEPENDENCY "<dependency id=\"ZedGraph\" version=\"[5.1.7]\" />")
+SET(EMGUCV_WINDOWS_NETSTANDARD_NUGET_DEPENDENCY "<dependency id=\"${EMGUCV_NUGET_ID}\" version=\"${CPACK_PACKAGE_DEPENDENCY_VERSION}\" />")
+SET(EMGUCV_WINDOWS_NETCORE_NUGET_DEPENDENCY "<dependency id=\"${EMGUCV_NUGET_ID}\" version=\"${CPACK_PACKAGE_DEPENDENCY_VERSION}\" />")
+SET(EMGUCV_WINDOWS_NETFRAMEWORK_NUGET_DEPENDENCY "<dependency id=\"${EMGUCV_NUGET_ID}\" version=\"${CPACK_PACKAGE_DEPENDENCY_VERSION}\" />")
+ 
+SET(EMGUCV_WINDOWS_NUGET_TITLE "EMGU CV ${EMGUCV_NUGET_TITLE_ARCH}")
+#SET(EMGUCV_WINDOWS_NUGET_TITLE "EMGU CV ${EMGUCV_NUGET_TITLE_ARCH}")
+STRING(STRIP "${EMGUCV_WINDOWS_NUGET_TITLE}" EMGUCV_WINDOWS_NUGET_TITLE)
+
+
+
 
 IF(WITH_CUDA)
-	SET(EMGUCV_NUGET_TITLE "${EMGUCV_NUGET_TITLE} with CUDA support")
+    
+	SET(EMGUCV_WINDOWS_NUGET_TITLE "${EMGUCV_WINDOWS_NUGET_TITLE} with CUDA support")
 	SET(EMGU_CUDA_NUGET_TITLE "Native x64 CUDA dependency for EMGU CV")
-	SET(EMGU_CUDA_NUGET_FILE_LIST "<file src=\"Emgu.Cuda.targets\" target=\"build\\${EMGU_CUDA_NUGET_ID}.targets\" />")
+	SET(EMGU_CUDA_NPP_NUGET_FILE_LIST "<file src=\"${EMGU_NPP_NUGET_ID}.targets\" target=\"build\\${EMGU_NPP_NUGET_ID}.targets\" />")
 	SET(EMGU_CUDA_VERSION "${npp_major}.${npp_minor}.${npp_build}")
+	IF ( (${cuda_major}) AND (${cuda_minor}) )
+		SET(EMGU_CUDA_VERSION "${cuda_major}.${cuda_minor}.${npp_build}")
+	ENDIF()
 	SET(EMGU_CUFFT_VERSION "${EMGU_CUDA_VERSION}")
 	SET(EMGU_CUFFT_NUGET_TITLE "Native x64 CUDA CUFFT dependency for EMGU CV")
-	SET(EMGU_CUFFT_NUGET_FILE_LIST "<file src=\"Emgu.Cufft.targets\" target=\"build\\${EMGU_CUFFT_NUGET_ID}.targets\" />")
-	SET(EMGUCV_NUGET_DEPENDENCY "${EMGUCV_NUGET_DEPENDENCY} <dependency id=\"${EMGU_CUDA_NUGET_ID}\" version=\"[${EMGU_CUDA_VERSION}]\" />")
-	SET(EMGU_CUDA_NUGET_DEPENDENCY "<dependency id=\"${EMGU_CUFFT_NUGET_ID}\" version=\"[${EMGU_CUFFT_VERSION}]\" />")
+	SET(EMGU_CUFFT_NUGET_FILE_LIST "<file src=\"${EMGU_CUFFT_NUGET_ID}.targets\" target=\"build\\${EMGU_CUFFT_NUGET_ID}.targets\" />")
+    SET(EMGU_CUDNN_VERSION "${CUDNN_MAJOR_VERSION}.${CUDNN_MINOR_VERSION}.${CUDNN_PATCH_VERSION}")
+	SET(EMGU_CUDNN_NUGET_TITLE "Native x64 CUDA DNN dependency for EMGU CV")
+	SET(EMGU_CUDNN_NUGET_FILE_LIST "<file src=\"${EMGU_CUDNN_NUGET_ID}.targets\" target=\"build\\${EMGU_CUDNN_NUGET_ID}.targets\" />")
+	SET(EMGU_CUDNN_CNN_NUGET_TITLE "Native x64 CNN component of CUDA DNN dependency for EMGU CV")
+	SET(EMGU_CUDNN_CNN_NUGET_FILE_LIST "<file src=\"${EMGU_CUDNN_CNN_NUGET_ID}.targets\" target=\"build\\${EMGU_CUDNN_CNN_NUGET_ID}.targets\" />")
+	SET(EMGU_CUDNN_OPS_NUGET_TITLE "Native x64 OPS component of CUDA DNN dependency for EMGU CV")
+	SET(EMGU_CUDNN_OPS_NUGET_FILE_LIST "<file src=\"${EMGU_CUDNN_OPS_NUGET_ID}.targets\" target=\"build\\${EMGU_CUDNN_OPS_NUGET_ID}.targets\" />")
+	SET(EMGU_NPP_VERSION "${EMGU_CUDA_VERSION}")
+	SET(EMGU_NPP_NUGET_TITLE "Native x64 CUDA dependency for EMGU CV")
+	SET(EMGU_NPP_NUGET_FILE_LIST "<file src=\"${EMGU_NPP_NUGET_ID}.targets\" target=\"build\\${EMGU_NPP_NUGET_ID}.targets\" />")
+	#SET(EMGUCV_NUGET_DEPENDENCY "${EMGUCV_NUGET_DEPENDENCY} <dependency id=\"${EMGUCV_WINDOWS_NUGET_ID}\" version=\"[${EMGU_CUDA_VERSION}]\" />")
+	IF (WITH_CUDNN)
+		SET(EMGUCV_WINDOWS_NETSTANDARD_NUGET_DEPENDENCY "${EMGUCV_WINDOWS_NETSTANDARD_NUGET_DEPENDENCY}<dependency id=\"${EMGU_CUDNN_NUGET_ID}\" version=\"[${EMGU_CUDNN_VERSION}]\" />")
+		SET(EMGUCV_WINDOWS_NETCORE_NUGET_DEPENDENCY "${EMGUCV_WINDOWS_NETCORE_NUGET_DEPENDENCY}<dependency id=\"${EMGU_CUDNN_NUGET_ID}\" version=\"[${EMGU_CUDNN_VERSION}]\" />")
+		SET(EMGUCV_WINDOWS_NETFRAMEWORK_NUGET_DEPENDENCY "${EMGUCV_WINDOWS_NETFRAMEWORK_NUGET_DEPENDENCY}<dependency id=\"${EMGU_CUDNN_NUGET_ID}\" version=\"[${EMGU_CUDNN_VERSION}]\" />")
+	ENDIF()
+	
+	SET(EMGUCV_WINDOWS_NETSTANDARD_NUGET_DEPENDENCY "${EMGUCV_WINDOWS_NETSTANDARD_NUGET_DEPENDENCY}<dependency id=\"${EMGU_CUFFT_NUGET_ID}\" version=\"[${EMGU_CUFFT_VERSION}]\" />")
+	SET(EMGUCV_WINDOWS_NETSTANDARD_NUGET_DEPENDENCY "${EMGUCV_WINDOWS_NETSTANDARD_NUGET_DEPENDENCY}<dependency id=\"${EMGU_NPP_NUGET_ID}\" version=\"[${EMGU_NPP_VERSION}]\" />")
+	SET(EMGUCV_WINDOWS_NETCORE_NUGET_DEPENDENCY "${EMGUCV_WINDOWS_NETCORE_NUGET_DEPENDENCY}<dependency id=\"${EMGU_CUFFT_NUGET_ID}\" version=\"[${EMGU_CUFFT_VERSION}]\" />")
+	SET(EMGUCV_WINDOWS_NETCORE_NUGET_DEPENDENCY "${EMGUCV_WINDOWS_NETCORE_NUGET_DEPENDENCY}<dependency id=\"${EMGU_NPP_NUGET_ID}\" version=\"[${EMGU_NPP_VERSION}]\" />")
+	SET(EMGUCV_WINDOWS_NETFRAMEWORK_NUGET_DEPENDENCY "${EMGUCV_WINDOWS_NETFRAMEWORK_NUGET_DEPENDENCY}<dependency id=\"${EMGU_CUFFT_NUGET_ID}\" version=\"[${EMGU_CUFFT_VERSION}]\" />")
+	SET(EMGUCV_WINDOWS_NETFRAMEWORK_NUGET_DEPENDENCY "${EMGUCV_WINDOWS_NETFRAMEWORK_NUGET_DEPENDENCY}<dependency id=\"${EMGU_NPP_NUGET_ID}\" version=\"[${EMGU_NPP_VERSION}]\" />")
+
 	IF(HAVE_WINDESKTOP_X64)
-		file(COPY "${CUDA_TOOLKIT_ROOT_DIR}/EULA.txt" DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/CUDA")
-		file(COPY "${CUDA_TOOLKIT_ROOT_DIR}/EULA.txt" DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/Cufft")
-		SET(EMGU_CUDA_NUGET_FILE_LIST "${EMGU_CUDA_NUGET_FILE_LIST} 
-		<file src=\"..\\..\\..\\libs\\x64\\cu*.dll\" exclude=\"..\\..\\..\\libs\\x64\\cufft*.dll\" target=\"build\\x64\" /> 
-		<file src=\"..\\..\\..\\libs\\x64\\npp*.dll\" target=\"build\\x64\" /> 
+	    #SET(CUDA_EULA_URL https://docs.nvidia.com/pdf/EULA.pdf)
+		#file(DOWNLOAD ${CUDA_EULA_URL} "${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/Emgu.CV.runtime.windows.cuda.npp/EULA.pdf")
+		#file(DOWNLOAD ${CUDA_EULA_URL} "${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/Emgu.CV.runtime.windows.cuda.cufft/EULA.pdf")
+		#file(COPY "${CUDA_TOOLKIT_ROOT_DIR}/EULA.txt" DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/Cudnn")
+		SET(EMGU_CUDA_NPP_NUGET_FILE_LIST "${EMGU_CUDA_NPP_NUGET_FILE_LIST} 
+		<file src=\"..\\..\\..\\libs\\x64\\cu*.dll\" exclude=\"..\\..\\..\\libs\\x64\\cufft*.dll;..\\..\\..\\libs\\x64\\cudnn*.dll\" target=\"build\\x64\" /> 
+		<file src=\"..\\..\\..\\libs\\x64\\npp*.dll\" target=\"build\\x64\" />
+		<file src=\"..\\..\\..\\miscellaneous\\nuget_icon.png\" target=\"icon.png\" />		
 		<file src=\"EULA.txt\" target=\"CUDA_EULA.txt\" />")
 		SET(EMGU_CUFFT_NUGET_FILE_LIST "${EMGU_CUFFT_NUGET_FILE_LIST} 
 		<file src=\"..\\..\\..\\libs\\x64\\cufft*.dll\" target=\"build\\x64\" />
+		<file src=\"..\\..\\..\\miscellaneous\\nuget_icon.png\" target=\"icon.png\" />
 		<file src=\"EULA.txt\" target=\"CUDA_EULA.txt\" />")
+		SET(EMGU_CUDNN_NUGET_FILE_LIST "${EMGU_CUDNN_NUGET_FILE_LIST} 
+		<file src=\"..\\..\\..\\libs\\x64\\cudnn*.dll\" exclude=\"..\\..\\..\\libs\\x64\\cudnn_ops_*.dll;..\\..\\..\\libs\\x64\\cudnn_cnn_*.dll\" target=\"build\\x64\" />
+		<file src=\"..\\..\\..\\miscellaneous\\nuget_icon.png\" target=\"icon.png\" />
+		<file src=\"NVIDIA_SLA_cuDNN_Support.txt\" target=\"cuDNN_SLA.txt\" />")
+		SET(EMGU_CUDNN_CNN_NUGET_FILE_LIST "${EMGU_CUDNN_CNN_NUGET_FILE_LIST} 
+		<file src=\"..\\..\\..\\libs\\x64\\cudnn_cnn_*.dll\" target=\"build\\x64\" />
+		<file src=\"..\\..\\..\\miscellaneous\\nuget_icon.png\" target=\"icon.png\" />
+		<file src=\"NVIDIA_SLA_cuDNN_Support.txt\" target=\"cuDNN_SLA.txt\" />")
+		SET(EMGU_CUDNN_OPS_NUGET_FILE_LIST "${EMGU_CUDNN_OPS_NUGET_FILE_LIST} 
+		<file src=\"..\\..\\..\\libs\\x64\\cudnn_ops_*.dll\" target=\"build\\x64\" />
+		<file src=\"..\\..\\..\\miscellaneous\\nuget_icon.png\" target=\"icon.png\" />
+		<file src=\"NVIDIA_SLA_cuDNN_Support.txt\" target=\"cuDNN_SLA.txt\" />")
+		SET(EMGU_CUDNN_NUGET_DEPENDENCY "
+		<dependencies>
+		  <dependency id=\"${EMGU_CUDNN_CNN_NUGET_ID}\" version=\"[${EMGU_CUDNN_VERSION}]\" />
+		  <dependency id=\"${EMGU_CUDNN_OPS_NUGET_ID}\" version=\"[${EMGU_CUDNN_VERSION}]\" />
+		</dependencies>")
 	ENDIF()
 	
 	SET(NUGET_PACKAGE_VENDOR "${CPACK_PACKAGE_VENDOR}")
@@ -871,45 +1201,115 @@ IF(WITH_CUDA)
 	#MESSAGE(STATUS "<<<<<<<<<<<<<<<< npp_major: ${npp_major} >>>>>>>>>>>>>>>>>>>>>> ")
 	#MESSAGE(STATUS "<<<<<<<<<<<<<<<< npp_minor: ${npp_minor} >>>>>>>>>>>>>>>>>>>>>> ")
 	#MESSAGE(STATUS "<<<<<<<<<<<<<<<< npp_build: ${npp_build} >>>>>>>>>>>>>>>>>>>>>> ")
-	SET(CUDA_VERSION_NUMERIC_ONLY "${npp_major}${npp_minor}")
+	
+	
+	IF ( (${cuda_major}) AND (${cuda_minor}) )
+	  SET(CUDA_VERSION_NUMERIC_ONLY "${cuda_major}${cuda_minor}")
+	ELSE()
+	  SET(CUDA_VERSION_NUMERIC_ONLY "${npp_major}${npp_minor}")
+	ENDIF()
 	
 	IF((${npp_major} GREATER 10) OR (("${npp_major}" STREQUAL "10") AND (${npp_minor} GREATER 0)))
-		SET(CUFFT_POSTFIX "${npp_major}")
+		IF (${cuda_major})
+		  SET(CUFFT_POSTFIX "${cuda_major}")
+		else()
+		  SET(CUFFT_POSTFIX "${npp_major}")
+		endif()
 	ELSE()
 		SET(CUFFT_POSTFIX "${npp_major}${npp_minor}")
 	ENDIF()
+	
 	#MESSAGE(STATUS "<<<<<<<<<<<<<<<< CUDA_VERSION_NUMERIC_ONLY: ${CUDA_VERSION_NUMERIC_ONLY} >>>>>>>>>>>>>>>>>>>>>> ")
 	
-	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Cuda.Package.nuspec.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/CUDA/Package.nuspec)
-	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Cufft.Package.nuspec.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/Cufft/Package.nuspec)
-	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Emgu.Cufft.targets.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/Cufft/Emgu.Cufft.targets)
-	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Emgu.Cuda.targets.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/CUDA/Emgu.Cuda.targets)
+	#CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Emgu.CV.runtime.windows.Package.nuspec.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/Emgu.CV.runtime.windows/Package.nuspec)
+	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/${EMGU_CUFFT_NUGET_ID}.Package.nuspec.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/${EMGU_CUFFT_NUGET_ID}/Package.nuspec)
+	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/${EMGU_CUDNN_NUGET_ID}.Package.nuspec.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/${EMGU_CUDNN_NUGET_ID}/Package.nuspec)
+	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/${EMGU_CUDNN_CNN_NUGET_ID}.Package.nuspec.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/${EMGU_CUDNN_CNN_NUGET_ID}/Package.nuspec)
+	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/${EMGU_CUDNN_OPS_NUGET_ID}.Package.nuspec.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/${EMGU_CUDNN_OPS_NUGET_ID}/Package.nuspec)
+	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/${EMGU_NPP_NUGET_ID}.Package.nuspec.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/${EMGU_NPP_NUGET_ID}/Package.nuspec)
+	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/${EMGU_CUFFT_NUGET_ID}.targets.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/${EMGU_CUFFT_NUGET_ID}/${EMGU_CUFFT_NUGET_ID}.targets)
+	#CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Emgu.CV.runtime.windows.targets.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/Emgu.CV.runtime.windows/${EMGUCV_WINDOWS_NUGET_ID}.targets)
+	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/${EMGU_CUDNN_NUGET_ID}.targets.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/${EMGU_CUDNN_NUGET_ID}/${EMGU_CUDNN_NUGET_ID}.targets)
+	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/${EMGU_CUDNN_CNN_NUGET_ID}.targets.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/${EMGU_CUDNN_CNN_NUGET_ID}/${EMGU_CUDNN_CNN_NUGET_ID}.targets)
+	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/${EMGU_CUDNN_OPS_NUGET_ID}.targets.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/${EMGU_CUDNN_OPS_NUGET_ID}/${EMGU_CUDNN_OPS_NUGET_ID}.targets)
+	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/${EMGU_NPP_NUGET_ID}.targets.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/${EMGU_NPP_NUGET_ID}/${EMGU_NPP_NUGET_ID}.targets)
 ENDIF()
 
+SET(EMGUCV_WINDOWS_NUGET_DEPENDENCY "	<dependencies>
+      <group targetFramework=\".NETStandard2.0\">${EMGUCV_WINDOWS_NETSTANDARD_NUGET_DEPENDENCY}</group>
+    </dependencies>")
+
+#SET(EMGUCV_WINDOWS_NUGET_DEPENDENCY "	<dependencies>
+#      <group targetFramework=\"net461\">${EMGUCV_WINDOWS_NETFRAMEWORK_NUGET_DEPENDENCY}</group>
+#      <group targetFramework=\".NETStandard2.0\">${EMGUCV_WINDOWS_NETSTANDARD_NUGET_DEPENDENCY}</group>
+#      <group targetFramework=\".NETCoreApp3.1\">${EMGUCV_WINDOWS_NETSTANDARD_NUGET_DEPENDENCY}</group>
+#    </dependencies>
+#    <frameworkAssemblies>
+#      <frameworkAssembly assemblyName=\"mscorlib\" targetFramework=\".NETFramework4.6.1\" />
+#      <frameworkAssembly assemblyName=\"System.Drawing\" targetFramework=\".NETFramework4.6.1\" />
+#    </frameworkAssemblies>")
 
 IF(HAVE_ANDROID_ALL_ARCH AND WIN32)
-	SET(EMGUCV_ANDROID_NUGET_TITLE "EMGU CV for Android")	
-	SET(EMGUCV_ANDROID_NUGET_FILE_LIST " 
-    <file src=\"..\\..\\..\\libs\\Emgu.CV.World.Android.dll\" target=\"lib\\MonoAndroid50\" />
-	<file src=\"..\\..\\..\\libs\\Emgu.CV.World.Android.XML\" target=\"lib\\MonoAndroid50\" />")
-	SET(EMGUCV_ANDROID_NUGET_FILE_LIST "${EMGUCV_ANDROID_NUGET_FILE_LIST} 
-	<file src=\"Emgu.CV.Android.targets\" target=\"build\\${EMGUCV_ANDROID_NUGET_ID}.targets\" />
-	<file src=\"..\\..\\..\\${LICENSE_FILE_NAME}\" target=\"\" />")
-	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Android.Package.nuspec.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/Android/Package.nuspec)
+  SET(EMGUCV_ANDROID_NUGET_TITLE "Emgu CV for Android Native Runtime")	
+  SET(EMGUCV_ANDROID_NUGET_FILE_LIST " 
+    <file src=\"..\\..\\..\\libs\\Emgu.CV.Platform.Android.dll\" target=\"lib\\MonoAndroid50\" />
+    <file src=\"..\\..\\..\\libs\\Emgu.CV.Platform.Android.xml\" target=\"lib\\MonoAndroid50\" />")
+    SET(EMGUCV_ANDROID_NUGET_FILE_LIST "${EMGUCV_ANDROID_NUGET_FILE_LIST} 
+    <file src=\"Emgu.CV.runtime.android.targets\" target=\"build\\${EMGUCV_ANDROID_NUGET_ID}.targets\" />
+    <file src=\"..\\..\\..\\miscellaneous\\nuget_icon.png\" target=\"icon.png\" />
+    <file src=\"..\\..\\..\\${EMGUCV_LICENSE_FILE}\" target=\"\" />")
+    SET(EMGUCV_ANDROID_NUGET_DEPENDENCY "
+    <dependencies>
+      <group targetFramework=\"MonoAndroid5.0\">
+        <dependency id=\"${EMGUCV_NUGET_ID}\" version=\"[${CPACK_PACKAGE_VERSION}]\" />
+      </group>
+    </dependencies>")
+  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Emgu.CV.runtime.android.Package.nuspec.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/Emgu.CV.runtime.android/Package.nuspec)
 ENDIF()
 
 IF(HAVE_IOS AND WIN32)
-	SET(EMGUCV_IOS_NUGET_TITLE "EMGU CV for iOS")	
-	SET(EMGUCV_IOS_NUGET_FILE_LIST " 
-    <file src=\"..\\..\\..\\libs\\Emgu.CV.World.IOS.dll\" target=\"lib\\Xamarin.iOS10\" />
-	<file src=\"..\\..\\..\\libs\\Emgu.CV.World.IOS.XML\" target=\"lib\\Xamarin.iOS10\" />")
-	SET(EMGUCV_IOS_NUGET_FILE_LIST "${EMGUCV_IOS_NUGET_FILE_LIST} 
-	<file src=\"Emgu.CV.IOS.targets\" target=\"build\\${EMGUCV_IOS_NUGET_ID}.targets\" />
-	<file src=\"..\\..\\..\\${LICENSE_FILE_NAME}\" target=\"\" />")
-	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/iOS.Package.nuspec.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/iOS/Package.nuspec)
+  SET(EMGUCV_IOS_NUGET_TITLE "Emgu CV for iOS")	
+  SET(EMGUCV_IOS_NUGET_FILE_LIST " 
+    <file src=\"..\\..\\..\\libs\\Emgu.CV.Platform.IOS.dll\" target=\"lib\\Xamarin.iOS10\" />
+    <file src=\"..\\..\\..\\libs\\Emgu.CV.Platform.IOS.XML\" target=\"lib\\Xamarin.iOS10\" />")
+    SET(EMGUCV_IOS_NUGET_FILE_LIST "${EMGUCV_IOS_NUGET_FILE_LIST} 
+    <file src=\"Emgu.CV.runtime.ios.targets\" target=\"build\\${EMGUCV_IOS_NUGET_ID}.targets\" />
+    <file src=\"..\\..\\..\\miscellaneous\\nuget_icon.png\" target=\"icon.png\" />
+    <file src=\"..\\..\\..\\${EMGUCV_LICENSE_FILE}\" target=\"\" />")
+    SET(EMGUCV_IOS_NUGET_DEPENDENCY "
+    <dependencies>
+      <group targetFramework=\"Xamarin.iOS10\">
+        <dependency id=\"${EMGUCV_NUGET_ID}\" version=\"[${CPACK_PACKAGE_VERSION}]\" />
+      </group>
+    </dependencies>")
+  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Emgu.CV.runtime.ios.Package.nuspec.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/Emgu.CV.runtime.ios/Package.nuspec)
 ENDIF()
 
+IF(HAVE_OSX)
+  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Emgu.CV.runtime.macos.Package.nuspec.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/Emgu.CV.runtime.macos/Package.nuspec)
+ENDIF()
 
+IF(HAVE_WINSTORE_10)
+  SET(EMGUCV_UWP_NUGET_TITLE "Emgu CV for UWP Native Runtime")
+  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Emgu.CV.runtime.uwp.Package.nuspec.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/Emgu.CV.runtime.uwp/Package.nuspec)
+ENDIF()
+
+IF(HAVE_WINDESKTOP_X86 OR HAVE_WINDESKTOP_X64)
+  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Emgu.CV.runtime.windows.Package.nuspec.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/Emgu.CV.runtime.windows/Package.nuspec)
+  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Emgu.CV.UI.Package.nuspec.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/Emgu.CV.UI/Package.nuspec)
+ENDIF()
+
+if(HAVE_LINUX_ARM)
+  SET(EMGUCV_RASPBIAN_NUGET_TITLE "Emgu CV for Raspbian Native Runtime")
+  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Emgu.CV.runtime.raspbian.Package.nuspec.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/Emgu.CV.runtime.raspbian/Package.nuspec)
+ENDIF()
+
+if(HAVE_LINUX_X86 OR HAVE_LINUX_X64)
+  SET(EMGUCV_UBUNTU_NUGET_TITLE "Emgu CV for Ubuntu Native Runtime")
+  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Emgu.CV.runtime.ubuntu.Package.nuspec.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/Emgu.CV.runtime.ubuntu/Package.nuspec)
+ENDIF()
+
+SET(EMGUCV_NUGET_TITLE "Emgu CV")
 SET(EMGUCV_NUGET_SUMMARY "Emgu CV is a cross platform .Net wrapper to the OpenCV image processing library.")
 
 IF ("${LICENSE_TYPE}" STREQUAL "Commercial")
@@ -918,10 +1318,16 @@ IF ("${LICENSE_TYPE}" STREQUAL "Commercial")
 	IF(HAVE_ANDROID_ALL_ARCH AND WIN32)
 	  SET(EMGUCV_ANDROID_NUGET_TITLE "${EMGUCV_ANDROID_NUGET_TITLE} Commercial Release")	
 	ENDIF()	
+	IF(HAVE_WINSTORE_10)
+	  SET(EMGUCV_UWP_NUGET_TITLE "${EMGUCV_UWP_NUGET_TITLE} Commercial Release")
+	ENDIF()
 ENDIF()
 
 #generate nuget config file for Emgu.CV 
-CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Package.nuspec.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/Package.nuspec)
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Emgu.CV.Package.nuspec.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/Emgu.CV/Package.nuspec)
+
+#generate nuget config file for Emgu.CV.Bitmap
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Emgu.CV.Bitmap.Package.nuspec.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/nuget/Emgu.CV.Bitmap/Package.nuspec)
 
 #CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/component.yaml.in ${CMAKE_CURRENT_SOURCE_DIR}/platforms/xamarin/emgucv_v3/component/component.yaml)
 
@@ -944,7 +1350,6 @@ IF (APPLE)
 ELSE()
   SET(OPENCV_LIBRARY_OUTPUT_NAME_POSTFIX "")
 ENDIF()
-
 
 SET(OPENCV_LIBRARY_OUTPUT_NAMES )
 
@@ -1073,28 +1478,28 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CvInvokeEntryPoints.cs.in ${CMA
 # ----------------------------------------------------------------------------
 #  Build the managed dlls of Emgu CV
 # ----------------------------------------------------------------------------
-#IF(NOT IOS) 
-  ADD_SUBDIRECTORY(Emgu.Util)
-  ADD_SUBDIRECTORY(Emgu.CV)
-  ADD_SUBDIRECTORY(Emgu.CV.UI)
-  ADD_SUBDIRECTORY(Emgu.CV.Example)
-  ADD_SUBDIRECTORY(Emgu.UI)
-  ADD_SUBDIRECTORY(Emgu.CV.Test)
-  ADD_SUBDIRECTORY(Emgu.CV.Cuda)
-  IF (EMGU_CV_WITH_TESSERACT)
-    ADD_SUBDIRECTORY(Emgu.CV.OCR)
-  ENDIF()
-    
-  ADD_SUBDIRECTORY(Emgu.CV.Contrib)
-  IF(NOT (NETFX_CORE OR ANDROID))
-    ADD_SUBDIRECTORY(Emgu.CV.UI.GL)
-  ENDIF()
-  ADD_SUBDIRECTORY(Emgu.CV.World)
-#ENDIF()
-
-IF(WIN32)
-  ADD_SUBDIRECTORY(platforms/nuget)
+ADD_SUBDIRECTORY(Emgu.Util)
+ADD_SUBDIRECTORY(Emgu.CV)
+ADD_SUBDIRECTORY(Emgu.CV.Platform)
+ADD_SUBDIRECTORY(Emgu.CV.Example)
+ADD_SUBDIRECTORY(Emgu.CV.Test)
+ADD_SUBDIRECTORY(Emgu.CV.Cuda)
+IF (EMGU_CV_WITH_TESSERACT)
+  ADD_SUBDIRECTORY(Emgu.CV.OCR)
 ENDIF()
+ 
+ADD_SUBDIRECTORY(Emgu.CV.Contrib)
+
+ADD_SUBDIRECTORY(Emgu.CV.Runtime)
+ADD_SUBDIRECTORY(platforms/nuget)
+
+INSTALL(
+  FILES
+  "opencv/LICENSE"
+  DESTINATION "lib"
+  COMPONENT emgucv_example_source
+  RENAME "opencv.license.txt"
+  )    
 
 IF(HAVE_ANDROID)
   INSTALL(
@@ -1104,12 +1509,7 @@ IF(HAVE_ANDROID)
     DESTINATION "Solution/Android"
     COMPONENT emgucv_example_source
     )
-  INSTALL(
-    FILES
-    "opencv/LICENSE"
-    DESTINATION "opencv"
-    COMPONENT emgucv_example_source
-    )    
+
 ENDIF()
 
 IF(HAVE_IOS)
@@ -1143,6 +1543,7 @@ INSTALL(
   FILES
   "${CMAKE_CURRENT_SOURCE_DIR}/Emgu.CV.snk"
   "${CMAKE_CURRENT_SOURCE_DIR}/CommonAssemblyInfo.cs"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Directory.Build.props"
   "${CMAKE_CURRENT_SOURCE_DIR}/${LICENSE_FILE_NAME}"
   "${CMAKE_CURRENT_SOURCE_DIR}/nuget.config"
   "${CMAKE_CURRENT_SOURCE_DIR}/components.config"
@@ -1180,13 +1581,12 @@ ELSEIF (WIN32)
   IF(NOT NETFX_CORE)
     
     if(WITH_FFMPEG)
-      
       INSTALL(
-	FILES
-	"${UNMANAGED_LIBRARY_OUTPUT_PATH}/${OPENCV_FFMPEG_OUTPUT_NAME}.dll"
-	DESTINATION "libs/${UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER}/"
-	COMPONENT libs
-	)
+		FILES
+		"${UNMANAGED_LIBRARY_OUTPUT_PATH}/${OPENCV_FFMPEG_OUTPUT_NAME}.dll"
+		DESTINATION "libs/${UNMANAGED_LIBRARY_OUTPUT_SUBFOLDER}/"
+		COMPONENT libs
+		)
     endif()
     
     # ----------------------------------------------------------------------------
@@ -1230,27 +1630,21 @@ ELSEIF (WIN32)
     #FOREACH (file ${UNMANAGED_DLL_32BIT})
     #	MESSAGE(STATUS "WILL DEPLOY ${file} with DEBUGGER VISUALIZER")
     #ENDFOREACH()
+	
     IF (HAS_WINDESKTOP_X86_NATIVE_BINARY)
-      SET(DEBUGER_VISUALIZER_FILES 
-	"Emgu.CV.World"
-	"Emgu.CV.UI"
-	"ZedGraph")
-      #SET(DEBUGGER_VISUALIZER_UNMANAGED_FILES
-	#    "Emgu.CV.DebuggerVisualizers"
-	#${OPENCV_LIBRARY_OUTPUT_NAMES}
-	#${CVEXTERN_DEPENDENCY_DLL_NAMES})
+    #  SET(DEBUGER_VISUALIZER_FILES 
+	#    "Emgu.CV.Platform.NetStandard"
+	#    "Emgu.CV.Platform.NetFramework")
     
-	SET(DEBUGGER_VISUALIZER_UNMANAGED_FILES)
-	FOREACH(full_file_name ${UNMANAGED_DLL_32BIT})
+	  SET(DEBUGGER_VISUALIZER_UNMANAGED_FILES)
+	  FOREACH(full_file_name ${UNMANAGED_DLL_32BIT})
 		get_filename_component(just_the_file_name "${full_file_name}" NAME_WE)
 		LIST(APPEND DEBUGGER_VISUALIZER_UNMANAGED_FILES "${just_the_file_name}")
-    ENDFOREACH()
+      ENDFOREACH()
 	  
-		#MESSAGE(STATUS "########### UNMANAGED_DLL_32BIT: ${UNMANAGED_DLL_32BIT}")
-	#MESSAGE(STATUS "########### DEBUGGER_VISUALIZER_UNMANAGED_FILES: ${DEBUGGER_VISUALIZER_UNMANAGED_FILES}")
-		
+	  #MESSAGE(STATUS "########### UNMANAGED_DLL_32BIT: ${UNMANAGED_DLL_32BIT}")
+	  #MESSAGE(STATUS "########### DEBUGGER_VISUALIZER_UNMANAGED_FILES: ${DEBUGGER_VISUALIZER_UNMANAGED_FILES}")
 
-      
       #MESSAGE(STATUS "########### DEBUGGER_VISUALIZER_UNMANAGED_FILES_SUBFOLDER: ${DEBUGGER_VISUALIZER_UNMANAGED_FILES_SUBFOLDER}")
 	  
       #FOREACH(UNMANAGE_DLL_NAME ${CVEXTERN_DEPENDENCY_DLL_NAMES})
@@ -1295,7 +1689,7 @@ ELSEIF (WIN32)
 	FOREACH (file ${DEBUGER_VISUALIZER_FILES})
 	  SET(INSTALL_DEBUGER_VISUALIZER_COMMAND
 	    "${INSTALL_DEBUGER_VISUALIZER_COMMAND}
-	CopyFiles /SILENT '\\\$INSTDIR\\\\bin\\\\${file}.dll' '$${vs_version}_INSTALL_FOLDER'")
+	CopyFiles /SILENT '\\\$INSTDIR\\\\libs\\\\${file}.dll' '$${vs_version}_INSTALL_FOLDER'")
 	ENDFOREACH()
 	
 	#INSTALL native DLLs
@@ -1325,7 +1719,8 @@ ELSEIF (WIN32)
 	#Install the Debugger Visualizer itself
 	SET(INSTALL_DEBUGER_VISUALIZER_COMMAND
 	  "${INSTALL_DEBUGER_VISUALIZER_COMMAND}
-	CopyFiles /SILENT '\\\$INSTDIR\\\\bin\\\\Emgu.CV.DebuggerVisualizers.${vs_version}.dll' '$${vs_version}_INSTALL_FOLDER'
+	CopyFiles /SILENT '\\\$INSTDIR\\\\libs\\\\Emgu.CV.DebuggerVisualizers.dll' '$${vs_version}_INSTALL_FOLDER'
+	CopyFiles /SILENT '\\\$INSTDIR\\\\libs\\\\System.Runtime.InteropServices.RuntimeInformation.dll' '$${vs_version}_INSTALL_FOLDER'
 	installDebuggerVisualizer4${vs_version}Done:")
 	
       ENDMACRO()
@@ -1357,7 +1752,7 @@ ELSEIF (WIN32)
 	ENDIF()
 	
 	SET(UNINSTALL_DEBUGER_VISUALIZER_COMMAND
-	"${UNINSTALL_DEBUGER_VISUALIZER_COMMAND}
+	"${UNINSTALL_DEBGER_VISUALIZER_COMMAND}
 	IfErrors uninstallDebuggerVisualizer4${vs_version}Done")
 	FOREACH (file ${DEBUGER_VISUALIZER_FILES})
 	  SET(UNINSTALL_DEBUGER_VISUALIZER_COMMAND
@@ -1383,7 +1778,8 @@ ELSEIF (WIN32)
 	
 	SET(UNINSTALL_DEBUGER_VISUALIZER_COMMAND
 	  "${UNINSTALL_DEBUGER_VISUALIZER_COMMAND}
-	Delete '$${vs_version}_INSTALL_FOLDEREmgu.CV.DebuggerVisualizers.${vs_version}.dll'
+	#Delete '$${vs_version}_INSTALL_FOLDEREmgu.CV.DebuggerVisualizers.${vs_version}.dll'
+	Delete '$${vs_version}_INSTALL_FOLDEREmgu.CV.DebuggerVisualizers.dll'
 	uninstallDebuggerVisualizer4${vs_version}Done:
 	")
       ENDMACRO()
@@ -1394,14 +1790,14 @@ ELSEIF (WIN32)
       #INSTALL_DEBUGER_VISUALIZER("VS2010" "Visual Studio 2010" "SOFTWARE\\\\\\\\Microsoft\\\\\\\\VisualStudio\\\\\\\\10.0")
       #SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "${CPACK_NSIS_EXTRA_INSTALL_COMMANDS}\n${INSTALL_DEBUGER_VISUALIZER_COMMAND}")
       
-      INSTALL_DEBUGER_VISUALIZER("VS2012" "Visual Studio 2012" "SOFTWARE\\\\\\\\Microsoft\\\\\\\\VisualStudio\\\\\\\\11.0")
-      SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "${CPACK_NSIS_EXTRA_INSTALL_COMMANDS}\n${INSTALL_DEBUGER_VISUALIZER_COMMAND}")
+      #INSTALL_DEBUGER_VISUALIZER("VS2012" "Visual Studio 2012" "SOFTWARE\\\\\\\\Microsoft\\\\\\\\VisualStudio\\\\\\\\11.0")
+      #SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "${CPACK_NSIS_EXTRA_INSTALL_COMMANDS}\n${INSTALL_DEBUGER_VISUALIZER_COMMAND}")
       
-      INSTALL_DEBUGER_VISUALIZER("VS2013" "Visual Studio 2013" "SOFTWARE\\\\\\\\Microsoft\\\\\\\\VisualStudio\\\\\\\\12.0")
-      SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "${CPACK_NSIS_EXTRA_INSTALL_COMMANDS}\n${INSTALL_DEBUGER_VISUALIZER_COMMAND}")
+      #INSTALL_DEBUGER_VISUALIZER("VS2013" "Visual Studio 2013" "SOFTWARE\\\\\\\\Microsoft\\\\\\\\VisualStudio\\\\\\\\12.0")
+      #SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "${CPACK_NSIS_EXTRA_INSTALL_COMMANDS}\n${INSTALL_DEBUGER_VISUALIZER_COMMAND}")
       
-      INSTALL_DEBUGER_VISUALIZER("VS2015" "Visual Studio 2015" "SOFTWARE\\\\\\\\Microsoft\\\\\\\\VisualStudio\\\\\\\\14.0")
-      SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "${CPACK_NSIS_EXTRA_INSTALL_COMMANDS}\n${INSTALL_DEBUGER_VISUALIZER_COMMAND}")
+      #INSTALL_DEBUGER_VISUALIZER("VS2015" "Visual Studio 2015" "SOFTWARE\\\\\\\\Microsoft\\\\\\\\VisualStudio\\\\\\\\14.0")
+      #SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "${CPACK_NSIS_EXTRA_INSTALL_COMMANDS}\n${INSTALL_DEBUGER_VISUALIZER_COMMAND}")
       
 	  INSTALL_DEBUGER_VISUALIZER("VS2017" "Visual Studio 2017" "SOFTWARE\\\\\\\\WOW6432NODE\\\\\\\\Microsoft\\\\\\\\VisualStudio\\\\\\\\SxS\\\\\\\\VS7")
       SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "${CPACK_NSIS_EXTRA_INSTALL_COMMANDS}\n${INSTALL_DEBUGER_VISUALIZER_COMMAND}")
@@ -1415,14 +1811,14 @@ ELSEIF (WIN32)
       #UNINSTALL_DEBUGER_VISUALIZER("VS2010" "SOFTWARE\\\\\\\\Microsoft\\\\\\\\VisualStudio\\\\\\\\10.0")
       #SET(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS}\n${UNINSTALL_DEBUGER_VISUALIZER_COMMAND}")
       
-      UNINSTALL_DEBUGER_VISUALIZER("VS2012" "SOFTWARE\\\\\\\\Microsoft\\\\\\\\VisualStudio\\\\\\\\11.0")
-      SET(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS}\n${UNINSTALL_DEBUGER_VISUALIZER_COMMAND}")
+      #UNINSTALL_DEBUGER_VISUALIZER("VS2012" "SOFTWARE\\\\\\\\Microsoft\\\\\\\\VisualStudio\\\\\\\\11.0")
+      #SET(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS}\n${UNINSTALL_DEBUGER_VISUALIZER_COMMAND}")
       
-      UNINSTALL_DEBUGER_VISUALIZER("VS2013" "SOFTWARE\\\\\\\\Microsoft\\\\\\\\VisualStudio\\\\\\\\12.0")
-      SET(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS}\n${UNINSTALL_DEBUGER_VISUALIZER_COMMAND}")
+      #UNINSTALL_DEBUGER_VISUALIZER("VS2013" "SOFTWARE\\\\\\\\Microsoft\\\\\\\\VisualStudio\\\\\\\\12.0")
+      #SET(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS}\n${UNINSTALL_DEBUGER_VISUALIZER_COMMAND}")
       
-      UNINSTALL_DEBUGER_VISUALIZER("VS2015" "SOFTWARE\\\\\\\\Microsoft\\\\\\\\VisualStudio\\\\\\\\14.0")
-      SET(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS}\n${UNINSTALL_DEBUGER_VISUALIZER_COMMAND}")
+      #UNINSTALL_DEBUGER_VISUALIZER("VS2015" "SOFTWARE\\\\\\\\Microsoft\\\\\\\\VisualStudio\\\\\\\\14.0")
+      #SET(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS}\n${UNINSTALL_DEBUGER_VISUALIZER_COMMAND}")
 	  
 	  UNINSTALL_DEBUGER_VISUALIZER("VS2017" "SOFTWARE\\\\\\\\WOW6432NODE\\\\\\\\Microsoft\\\\\\\\VisualStudio\\\\\\\\SxS\\\\\\\\VS7")
       SET(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS}\n${UNINSTALL_DEBUGER_VISUALIZER_COMMAND}")
@@ -1654,9 +2050,9 @@ ELSEIF (WIN32)
   # ----------------------------------------------------------------------------
   SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "${CPACK_NSIS_EXTRA_INSTALL_COMMANDS}\nCreateDirectory \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Visual Studio Solution\\\" ")
   
-  SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "${CPACK_NSIS_EXTRA_INSTALL_COMMANDS}\nCreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Visual Studio Solution\\\\Visual Studio 2013 - 2019 Examples.lnk\\\"  \\\"$INSTDIR\\\\Solution\\\\Windows.Desktop\\\\Emgu.CV.Example.sln\\\" ")	
+  SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "${CPACK_NSIS_EXTRA_INSTALL_COMMANDS}\nCreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Visual Studio Solution\\\\Visual Studio 2017 - 2019 Examples.lnk\\\"  \\\"$INSTDIR\\\\Solution\\\\Windows.Desktop\\\\Emgu.CV.Example.sln\\\" ")	
   
-  SET(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS}\n Delete \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Visual Studio Solution\\\\Visual Studio 2013 - 2019 Examples.lnk\\\" ")
+  SET(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS}\n Delete \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Visual Studio Solution\\\\Visual Studio 2017 - 2019 Examples.lnk\\\" ")
   
   SET(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS}\nRMDir  \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Visual Studio Solution\\\" ")
   
@@ -1667,15 +2063,17 @@ ELSEIF (WIN32)
   
   SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "${CPACK_NSIS_EXTRA_INSTALL_COMMANDS}\nCreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\License\\\\Emgu CV License.lnk\\\"  \\\"$INSTDIR\\\\${LICENSE_FILE_NAME}\\\" ")	
   SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "${CPACK_NSIS_EXTRA_INSTALL_COMMANDS}\nCreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\License\\\\Open CV License.lnk\\\"  \\\"$INSTDIR\\\\lib\\\\opencv.license.txt\\\" ")
-  SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "${CPACK_NSIS_EXTRA_INSTALL_COMMANDS}\nCreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\License\\\\ZedGraph License.lnk\\\"  \\\"$INSTDIR\\\\lib\\\\3rdParty\\\\ZedGraph.license.txt\\\" ")	
-  SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "${CPACK_NSIS_EXTRA_INSTALL_COMMANDS}\nCreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\License\\\\Tesseract OCR License.lnk\\\"  \\\"$INSTDIR\\\\lib\\\\3rdParty\\\\tesseract-ocr.license.txt\\\" ")	
-  SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "${CPACK_NSIS_EXTRA_INSTALL_COMMANDS}\nCreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\License\\\\CvBlob License.lnk\\\"  \\\"$INSTDIR\\\\lib\\\\3rdParty\\\\cvblob.license.txt\\\" ")	
+  IF(EMGU_CV_WITH_TESSERACT)
+    SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "${CPACK_NSIS_EXTRA_INSTALL_COMMANDS}\nCreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\License\\\\Tesseract OCR License.lnk\\\"  \\\"$INSTDIR\\\\lib\\\\tesseract-ocr.license.txt\\\" ")	
+  ENDIF()
+  #SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "${CPACK_NSIS_EXTRA_INSTALL_COMMANDS}\nCreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\License\\\\CvBlob License.lnk\\\"  \\\"$INSTDIR\\\\lib\\\\3rdParty\\\\cvblob.license.txt\\\" ")	
   
   SET(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS}\n Delete \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\License\\\\Emgu CV License.lnk\\\" ")
   SET(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS}\n Delete \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\License\\\\Open CV License.lnk\\\" ")
-  SET(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS}\n Delete \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\License\\\\ZedGraph License.lnk\\\" ")
-  SET(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS}\n Delete \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\License\\\\Tesseract OCR License.lnk\\\" ")
-  SET(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS}\n Delete \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\License\\\\CvBlob License.lnk\\\" ")
+  IF(EMGU_CV_WITH_TESSERACT)
+    SET(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS}\n Delete \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\License\\\\Tesseract OCR License.lnk\\\" ")
+  ENDIF()
+  #SET(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS}\n Delete \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\License\\\\CvBlob License.lnk\\\" ")
   SET(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS}\nRMDir  \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\License\\\" ")
   
   #IF(EMGU_CV_EXAMPLE_BUILD AND NOT NETFX_CORE)
@@ -1810,105 +2208,114 @@ ELSEIF (APPLE)
   
 ELSE() #LINUX
   SET(MONO_GACUTIL_EXEC "gacutil")
-  SET(LINUX_CONTROL_FILE_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/cmake/linux")
-  SET(EMGUCV_MANAGED_DLLS "Emgu.CV.World" "Emgu.CV.UI" "ZedGraph")
+  #SET(LINUX_CONTROL_FILE_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/cmake/linux")
+  SET(EMGUCV_MANAGED_DLLS "Emgu.CV.Platform.NetStandard" "Emgu.CV.Platform.NetCore")
   
-  SET(CLIFILELIST_CONTENT "")
-  FOREACH(MANAGED_DLL ${EMGUCV_MANAGED_DLLS})
-    SET(CLIFILELIST_CONTENT "${CLIFILELIST_CONTENT}/usr/${CPACK_PACKAGE_CLI_FOLDER}/${MANAGED_DLL}.dll\n")
-  ENDFOREACH()
-  FILE(WRITE ${LINUX_CONTROL_FILE_FOLDER}/clifilelist.txt ${CLIFILELIST_CONTENT})
-  INSTALL(
-    FILES
-    ${LINUX_CONTROL_FILE_FOLDER}/clifilelist.txt
-    DESTINATION ${CPACK_PACKAGE_CLI_FOLDER}
-    COMPONENT emgucv_binary)
+  #SET(CLIFILELIST_CONTENT "")
+  #FOREACH(MANAGED_DLL ${EMGUCV_MANAGED_DLLS})
+  #  SET(CLIFILELIST_CONTENT "${CLIFILELIST_CONTENT}/usr/${CPACK_PACKAGE_CLI_FOLDER}/${MANAGED_DLL}.dll\n")
+  #ENDFOREACH()
+  #FILE(WRITE ${LINUX_CONTROL_FILE_FOLDER}/clifilelist.txt ${CLIFILELIST_CONTENT})
+  #INSTALL(
+  #  FILES
+  #  ${LINUX_CONTROL_FILE_FOLDER}/clifilelist.txt
+  #  DESTINATION ${CPACK_PACKAGE_CLI_FOLDER}
+  #  COMPONENT emgucv_binary)
   
   #creating the pkg-config file
-  SET(PACKAGE_CFG_REF_CONTENT "")
-  FOREACH(MANAGED_DLL ${EMGUCV_MANAGED_DLLS})
-    SET(PACKAGE_CFG_REF_CONTENT "${PACKAGE_CFG_REF_CONTENT} -r:\${libdir}/${MANAGED_DLL}.dll")
-  ENDFOREACH()
+  #SET(PACKAGE_CFG_REF_CONTENT "")
+  #FOREACH(MANAGED_DLL ${EMGUCV_MANAGED_DLLS})
+  #  SET(PACKAGE_CFG_REF_CONTENT "${PACKAGE_CFG_REF_CONTENT} -r:\${libdir}/${MANAGED_DLL}.dll")
+  #ENDFOREACH()
   
-  FILE(WRITE ${LINUX_CONTROL_FILE_FOLDER}/${CPACK_PACKAGE_NAME}.pc
-    "prefix=/usr\nexec_prefix=\${prefix}\nlibdir=\${exec_prefix}/${CPACK_PACKAGE_CLI_FOLDER}\napidir=\${exec_prefix}/${CPACK_PACKAGE_CLI_FOLDER}\n\nName: ${CPACK_PACKAGE_NAME}\nDescription: ${CPACK_PACKAGE_DESCRIPTION_SUMMARY}\nVersion: ${CPACK_PACKAGE_VERSION}\nLibs: ${PACKAGE_CFG_REF_CONTENT}\n")
-  INSTALL(
-    FILES
-    ${LINUX_CONTROL_FILE_FOLDER}/${CPACK_PACKAGE_NAME}.pc
-    DESTINATION /usr/lib/pkgconfig
-    COMPONENT emgucv_binary)
+  #FILE(WRITE ${LINUX_CONTROL_FILE_FOLDER}/${CPACK_PACKAGE_NAME}.pc
+  #  "prefix=/usr\nexec_prefix=\${prefix}\nlibdir=\${exec_prefix}/${CPACK_PACKAGE_CLI_FOLDER}\napidir=\${exec_prefix}/${CPACK_PACKAGE_CLI_FOLDER}\n\nName: ${CPACK_PACKAGE_NAME}\nDescription: ${CPACK_PACKAGE_DESCRIPTION_SUMMARY}\nVersion: ${CPACK_PACKAGE_VERSION}\nLibs: ${PACKAGE_CFG_REF_CONTENT}\n")
+  #INSTALL(
+  #  FILES
+  #  ${LINUX_CONTROL_FILE_FOLDER}/${CPACK_PACKAGE_NAME}.pc
+  #  DESTINATION /usr/lib/pkgconfig
+  #  COMPONENT emgucv_binary)
   
-  SET(REMOVE_EMGU_FROM_GAC_SCRIPT "")
-  FOREACH(MANAGED_DLL ${EMGUCV_MANAGED_DLLS})
-    SET(REMOVE_EMGU_FROM_GAC_SCRIPT "${REMOVE_EMGU_FROM_GAC_SCRIPT} ${MANAGED_DLL}")
-  ENDFOREACH()
-  SET(REMOVE_EMGU_FROM_GAC_SCRIPT "for dll in${REMOVE_EMGU_FROM_GAC_SCRIPT}; do ${MONO_GACUTIL_EXEC} -u $dll; done")
+  #SET(REMOVE_EMGU_FROM_GAC_SCRIPT "")
+  #FOREACH(MANAGED_DLL ${EMGUCV_MANAGED_DLLS})
+  #  SET(REMOVE_EMGU_FROM_GAC_SCRIPT "${REMOVE_EMGU_FROM_GAC_SCRIPT} ${MANAGED_DLL}")
+  #ENDFOREACH()
+  #SET(REMOVE_EMGU_FROM_GAC_SCRIPT "for dll in${REMOVE_EMGU_FROM_GAC_SCRIPT}; do ${MONO_GACUTIL_EXEC} -u $dll; done")
   
-  SET(CPACK_STRIP_FILES "")
+  #SET(CPACK_STRIP_FILES "")
   
   IF(NOT CPACK_GENERATOR)
     MESSAGE(STATUS "Checking for CPACK build type...")
-    FIND_PROGRAM(DPKG_CMD dpkg)
-    IF (DPKG_CMD)
+    FIND_PROGRAM(ZIP_CMD zip)
+    IF (ZIP_CMD)
       # ----------------------------------------------------------------------------
       #  Building .deb package for Debian 
       # ----------------------------------------------------------------------------
-      MESSAGE(STATUS "FOUND dpkg: ${DPKG_CMD}")
-      LIST(APPEND CPACK_GENERATOR DEB)
+      MESSAGE(STATUS "FOUND zip: ${ZIP_CMD}")
+      LIST(APPEND CPACK_GENERATOR ZIP)
     ENDIF()
+
+    #FIND_PROGRAM(DPKG_CMD dpkg)
+    #IF (DPKG_CMD)
+      # ----------------------------------------------------------------------------
+      #  Building .deb package for Debian 
+      # ----------------------------------------------------------------------------
+    #  MESSAGE(STATUS "FOUND dpkg: ${DPKG_CMD}")
+    #  LIST(APPEND CPACK_GENERATOR DEB)
+    #ENDIF()
     
-    FIND_PROGRAM(RPMBUILD_CMD rpmbuild)
-    IF(RPMBUILD_CMD)
+    #FIND_PROGRAM(RPMBUILD_CMD rpmbuild)
+    #IF(RPMBUILD_CMD)
       # ----------------------------------------------------------------------------
       #  Building .rpm package  
       # ----------------------------------------------------------------------------
-      MESSAGE(STATUS "FOUND rpmbuild: ${RPMBUILD_CMD}")
-      LIST(APPEND CPACK_GENERATOR RPM)
-    ENDIF()
+    #  MESSAGE(STATUS "FOUND rpmbuild: ${RPMBUILD_CMD}")
+    #  LIST(APPEND CPACK_GENERATOR RPM)
+    #ENDIF()
   ENDIF()
   
-  SET(PREINST_SCRIPT "#!/bin/sh\nmkdir -p /usr/lib/pkgconfig /usr/${CPACK_PACKAGE_CLI_FOLDER} /usr/share/opencv/haarcascades /usr/share/opencv/lbpcascades /usr/share/opencv/doc \n")
-  LIST(FIND CPACK_GENERATOR "DEB" TEMP)
-  IF(NOT (${TEMP} EQUAL -1))
-    SET(DEBIAN_CONTROL_FILE_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/cmake/debian")
-    FILE(WRITE ${DEBIAN_CONTROL_FILE_FOLDER}/preinst ${PREINST_SCRIPT}) 
-    FILE(WRITE ${DEBIAN_CONTROL_FILE_FOLDER}/postinst
-      "#!/bin/sh\nset -e\nif [ \"$1\" = \"configure\" ]; then\n  ldconfig\n  ${MONO_GACUTIL_EXEC} -il /usr/${CPACK_PACKAGE_CLI_FOLDER}/clifilelist.txt -package ${CPACK_PACKAGE_NAME}\nfi\n")
-    FILE(WRITE ${DEBIAN_CONTROL_FILE_FOLDER}/prerm
-      "#!/bin/sh\nset -e\nif [ \"$1\" = \"remove\" ] || [ \"$1\" = \"upgrade\" ] && [ -x /usr/share/cli-common/gac-package-remove ]; then\n${REMOVE_EMGU_FROM_GAC_SCRIPT}\nfi\n")
+  #SET(PREINST_SCRIPT "#!/bin/sh\nmkdir -p /usr/lib/pkgconfig /usr/${CPACK_PACKAGE_CLI_FOLDER} /usr/share/opencv/haarcascades /usr/share/opencv/lbpcascades /usr/share/opencv/doc \n")
+  #LIST(FIND CPACK_GENERATOR "DEB" TEMP)
+  #IF(NOT (${TEMP} EQUAL -1))
+  #  SET(DEBIAN_CONTROL_FILE_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/cmake/debian")
+  #  FILE(WRITE ${DEBIAN_CONTROL_FILE_FOLDER}/preinst ${PREINST_SCRIPT}) 
+  #  FILE(WRITE ${DEBIAN_CONTROL_FILE_FOLDER}/postinst
+  #    "#!/bin/sh\nset -e\nif [ \"$1\" = \"configure\" ]; then\n  ldconfig\n  ${MONO_GACUTIL_EXEC} -il /usr/${CPACK_PACKAGE_CLI_FOLDER}/clifilelist.txt -package ${CPACK_PACKAGE_NAME}\nfi\n")
+  #  FILE(WRITE ${DEBIAN_CONTROL_FILE_FOLDER}/prerm
+  #    "#!/bin/sh\nset -e\nif [ \"$1\" = \"remove\" ] || [ \"$1\" = \"upgrade\" ] && [ -x /usr/share/cli-common/gac-package-remove ]; then\n${REMOVE_EMGU_FROM_GAC_SCRIPT}\nfi\n")
     
-    SET(DEBIAN_PACKAGE_PRIORITY "optional")
-    SET(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${DEBIAN_CONTROL_FILE_FOLDER}/preinst;${DEBIAN_CONTROL_FILE_FOLDER}/postinst;${DEBIAN_CONTROL_FILE_FOLDER}/prerm;${DEBIAN_CONTROL_FILE_FOLDER}/postrm")
-    SET(CPACK_DEBIAN_PACKAGE_DEPENDS "mono-runtime (>> 2.4.2), mono-2.0-gac, libtiff5, libgeotiff2, libgtk-3-0, libgstreamer1.0-0, libavcodec54, libswscale2, libavformat54, libopenexr6, libjasper1, libdc1394-22, libv4l-0, libqt4-opengl")
-    IF(EMGU_CV_WITH_TESSERACT)
-      SET(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libtesseract3")
-    ENDIF()
-    IF(WITH_TBB)
-      SET(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libtbb2")
-    ENDIF()
-  ENDIF()
+  #  SET(DEBIAN_PACKAGE_PRIORITY "optional")
+  #  SET(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${DEBIAN_CONTROL_FILE_FOLDER}/preinst;${DEBIAN_CONTROL_FILE_FOLDER}/postinst;${DEBIAN_CONTROL_FILE_FOLDER}/prerm;${DEBIAN_CONTROL_FILE_FOLDER}/postrm")
+  #  SET(CPACK_DEBIAN_PACKAGE_DEPENDS "mono-runtime (>> 2.4.2), mono-2.0-gac, libtiff5, libgeotiff2, libgtk-3-0, libgstreamer1.0-0, libavcodec54, libswscale2, libavformat54, libopenexr6, libjasper1, libdc1394-22, libv4l-0, libqt4-opengl")
+  #  IF(EMGU_CV_WITH_TESSERACT)
+  #    SET(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libtesseract3")
+  #  ENDIF()
+  #  IF(WITH_TBB)
+  #    SET(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libtbb2")
+  #  ENDIF()
+  #ENDIF()
   
-  LIST(FIND CPACK_GENERATOR "RPM" TEMP)
-  IF(NOT (${TEMP} EQUAL -1))  
-    SET(CPACK_RPM_PACKAGE_LICENSE "GPL v3")
-    SET(CPACK_RPM_PACKAGE_REQUIRES "mono-core >= 2.6, mono-wcf, jasper, libgeotiff, gtk2, OpenEXR, libv4l, libdc1394, qt")
-    IF (WITH_TBB)
-      SET(CPACK_RPM_PACKAGE_REQUIRES ", tbb")
-    ENDIF()
-    IF(EMGUCV_WITH_TESSERACT AND TESSERACT_FOUND)
-      SET(CPACK_RPM_PACKAGE_REQUIRES ", tesseract")
-    ENDIF()    
-    SET(RPM_CONTROL_FILE_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/cmake/rpm")
-    FILE(WRITE ${RPM_CONTROL_FILE_FOLDER}/preinst ${PREINST_SCRIPT})
-    FILE(WRITE ${RPM_CONTROL_FILE_FOLDER}/postinst
-      "ldconfig\n${MONO_GACUTIL_EXEC} -il /usr/${CPACK_PACKAGE_CLI_FOLDER}/clifilelist.txt -package ${CPACK_PACKAGE_NAME}\n")
-    FILE(WRITE ${RPM_CONTROL_FILE_FOLDER}/prerm
-      "${REMOVE_EMGU_FROM_GAC_SCRIPT}\n")
-    SET(CPACK_RPM_PRE_INSTALL_SCRIPT_FILE "${RPM_CONTROL_FILE_FOLDER}/preinst")
-    SET(CPACK_RPM_POST_INSTALL_SCRIPT_FILE "${RPM_CONTROL_FILE_FOLDER}/postinst")
-    SET(CPACK_RPM_PRE_UNINSTALL_SCRIPT_FILE "${RPM_CONTROL_FILE_FOLDER}/prerm")
-    SET(CPACK_RPM_POST_UNINSTALL_SCRIPT_FILE "${RPM_CONTROL_FILE_FOLDER}/postrm")
-  ENDIF()	
+  #LIST(FIND CPACK_GENERATOR "RPM" TEMP)
+  #IF(NOT (${TEMP} EQUAL -1))  
+  #  SET(CPACK_RPM_PACKAGE_LICENSE "GPL v3")
+  #  SET(CPACK_RPM_PACKAGE_REQUIRES "mono-core >= 2.6, mono-wcf, jasper, libgeotiff, gtk2, OpenEXR, libv4l, libdc1394, qt")
+  #  IF (WITH_TBB)
+  #    SET(CPACK_RPM_PACKAGE_REQUIRES ", tbb")
+  #  ENDIF()
+  #  IF(EMGUCV_WITH_TESSERACT AND TESSERACT_FOUND)
+  #    SET(CPACK_RPM_PACKAGE_REQUIRES ", tesseract")
+  #  ENDIF()    
+  #  SET(RPM_CONTROL_FILE_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/cmake/rpm")
+  #  FILE(WRITE ${RPM_CONTROL_FILE_FOLDER}/preinst ${PREINST_SCRIPT})
+  #  FILE(WRITE ${RPM_CONTROL_FILE_FOLDER}/postinst
+  #    "ldconfig\n${MONO_GACUTIL_EXEC} -il /usr/${CPACK_PACKAGE_CLI_FOLDER}/clifilelist.txt -package ${CPACK_PACKAGE_NAME}\n")
+  #  FILE(WRITE ${RPM_CONTROL_FILE_FOLDER}/prerm
+  #    "${REMOVE_EMGU_FROM_GAC_SCRIPT}\n")
+  #  SET(CPACK_RPM_PRE_INSTALL_SCRIPT_FILE "${RPM_CONTROL_FILE_FOLDER}/preinst")
+  #  SET(CPACK_RPM_POST_INSTALL_SCRIPT_FILE "${RPM_CONTROL_FILE_FOLDER}/postinst")
+  #  SET(CPACK_RPM_PRE_UNINSTALL_SCRIPT_FILE "${RPM_CONTROL_FILE_FOLDER}/prerm")
+  #  SET(CPACK_RPM_POST_UNINSTALL_SCRIPT_FILE "${RPM_CONTROL_FILE_FOLDER}/postrm")
+  #ENDIF()	
 ENDIF()  
 
 MESSAGE(STATUS "CPACK_GENERATOR: ${CPACK_GENERATOR}")

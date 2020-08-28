@@ -1,4 +1,6 @@
-﻿namespace TFInterop
+﻿using Emgu.CV.UI;
+
+namespace TFInterop
 {
     partial class MainForm
     {
@@ -28,7 +30,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.pictureBox = new System.Windows.Forms.PictureBox();
+            this.pictureBox = new ImageBox();
             this.messageLabel = new System.Windows.Forms.Label();
             this.fileNameTextBox = new System.Windows.Forms.TextBox();
             this.openFileButton = new System.Windows.Forms.Button();
@@ -115,6 +117,7 @@
             this.Controls.Add(this.pictureBox);
             this.Name = "MainForm";
             this.Text = "Emgu TF Interop";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -123,7 +126,7 @@
 
         #endregion
 
-        private System.Windows.Forms.PictureBox pictureBox;
+        private Emgu.CV.UI.ImageBox pictureBox;
         private System.Windows.Forms.Label messageLabel;
         private System.Windows.Forms.TextBox fileNameTextBox;
         private System.Windows.Forms.Button openFileButton;

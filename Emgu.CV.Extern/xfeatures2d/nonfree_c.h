@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.
 //
 //----------------------------------------------------------------------------
 
@@ -9,15 +9,18 @@
 #define EMGU_NONFREE_C_H
 
 #include "opencv2/core/core_c.h"
-//#include "opencv2/nonfree/nonfree.hpp"
-#include "opencv2/xfeatures2d.hpp"
 
-//SIFTDetector
-CVAPI(cv::xfeatures2d::SIFT*) cveSIFTCreate(
-   int nFeatures, int nOctaveLayers, 
-   double contrastThreshold, double edgeThreshold, 
-   double sigma, cv::Feature2D** feature2D, cv::Ptr<cv::xfeatures2d::SIFT>** sharedPtr);
-CVAPI(void) cveSIFTRelease(cv::Ptr<cv::xfeatures2d::SIFT>** sharedPtr);
+#ifdef HAVE_OPENCV_XFEATURES2D
+#include "opencv2/xfeatures2d.hpp"
+#else
+static inline CV_NORETURN void throw_no_xfeatures2d() { CV_Error(cv::Error::StsBadFunc, "The library is compiled without xfeatures2d support"); }
+namespace cv {
+	class Feature2D {};
+	namespace xfeatures2d {
+		class SURF {};
+	}
+}
+#endif
 
 //SURFDetector
 CVAPI(cv::xfeatures2d::SURF*) cveSURFCreate(double hessianThresh, int nOctaves, int nOctaveLayers, bool extended, bool upright, cv::Feature2D** feature2D, cv::Ptr<cv::xfeatures2d::SURF>** sharedPtr);

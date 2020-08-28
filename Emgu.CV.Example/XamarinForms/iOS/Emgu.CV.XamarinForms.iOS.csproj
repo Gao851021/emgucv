@@ -11,6 +11,7 @@
     <AssemblyName>EmguCVXamarinFormsiOS</AssemblyName>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
+    <ProvisioningType>manual</ProvisioningType>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhoneSimulator' ">
     <DebugSymbols>true</DebugSymbols>
@@ -116,7 +117,12 @@
     <InterfaceDefinition Include="Resources\LaunchScreen.storyboard" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="OpenTK-1.0" />
+    <Reference Include="netstandard">
+      <!-- HintPath for macOS -->
+      <HintPath Condition="Exists('/Library/Frameworks/Xamarin.iOS.framework/Versions/Current/lib/mono/Xamarin.iOS/Facades/System.Drawing.Common.dll')">/Library/Frameworks/Xamarin.iOS.framework/Versions/Current/lib/mono/Xamarin.iOS/Facades/netstandard.dll</HintPath>
+      <!-- HintPath for Windows -->
+      <HintPath Condition="Exists('$(TargetFrameworkRootPath)\Xamarin.iOS\v1.0\Facades\System.Drawing.Common.dll')">$(TargetFrameworkRootPath)\Xamarin.iOS\v1.0\Facades\netstandard.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceModel" />
@@ -127,29 +133,23 @@
     <Reference Include="Xamarin.iOS" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Emgu.CV.World\Emgu.CV.World.IOS.csproj">
-      <Project>{0EE2B36C-F7CD-49FA-A270-D7D988CFF6E5}</Project>
-      <Name>Emgu.CV.World.IOS</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="..\..\..\opencv\data\haarcascades\haarcascade_eye.xml">
-      <Link>haarcascade_eye.xml</Link>
-    </Content>
-    <Content Include="..\..\..\opencv\data\haarcascades\haarcascade_frontalface_default.xml">
-      <Link>haarcascade_frontalface_default.xml</Link>
-    </Content>
-    <Content Include="..\..\FaceDetection\lena.jpg">
+    <Content Include="..\Core\lena.jpg">
       <Link>lena.jpg</Link>
     </Content>
-    <Content Include="..\..\FeatureMatching\box.png">
+    <Content Include="..\Core\box.png">
       <Link>box.png</Link>
     </Content>
-    <Content Include="..\..\FeatureMatching\box_in_scene.png">
+    <Content Include="..\Core\box_in_scene.png">
       <Link>box_in_scene.png</Link>
     </Content>
-    <Content Include="..\..\PedestrianDetection\pedestrian.png">
+    <Content Include="..\Core\pedestrian.png">
       <Link>pedestrian.png</Link>
+    </Content>
+    <Content Include="..\Core\pic3.png">
+      <Link>pic3.png</Link>
+    </Content>
+    <Content Include="..\Core\stop-sign.jpg">
+      <Link>stop-sign.jpg</Link>
     </Content>
     <Content Include="..\Core\test_image.png">
       <Link>test_image.png</Link>
@@ -160,11 +160,24 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Xam.Plugin.Media">
-      <Version>4.0.1.5</Version>
+      <Version>5.0.1</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Forms">
-      <Version>4.1.0.673156</Version>
+      <Version>4.8.0.1269</Version>
     </PackageReference>
+    <PackageReference Include="Xamarin.Plugin.FilePicker">
+      <Version>2.1.41</Version>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Emgu.CV.Platform\iOS\Emgu.CV.Platform.IOS.csproj">
+      <Project>{0EE2B36C-F7CD-49FA-A270-D7D988CFF6E5}</Project>
+      <Name>Emgu.CV.Platform.IOS</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\Emgu.CV.Platform\NetStandard_iOS\Emgu.CV.Platform.NetStandard.IOS.csproj">
+      <Project>{79214dcd-3f36-4c50-97f4-11af21f60711}</Project>
+      <Name>Emgu.CV.Platform.NetStandard.IOS</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="..\Core\Emgu.CV.XamarinForms.projitems" Label="Shared" />
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.CSharp.targets" />

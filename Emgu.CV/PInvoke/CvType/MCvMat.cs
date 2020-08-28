@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
 using System;
@@ -78,10 +78,6 @@ namespace Emgu.CV.Structure
       /// <summary>
       /// Offset of roi
       /// </summary>
-#if NETFX_CORE || NETSTANDARD1_4 
       public static readonly int TypeOffset = (int)Marshal.OffsetOf<MCvMat>("Type");
-#else
-      public static readonly int TypeOffset = (int)Marshal.OffsetOf(typeof(MCvMat), "Type");
-#endif
    }
 }

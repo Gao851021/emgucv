@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
 using System;
@@ -10,8 +10,12 @@ using Emgu.CV.UI;
 using System.Diagnostics;
 
 [assembly: DebuggerVisualizer(
-typeof(Emgu.CV.DebuggerVisualizers.MatrixVisualizer),
-Target = typeof(Matrix<>))]
+    typeof(Emgu.CV.DebuggerVisualizers.MatrixVisualizer),
+    typeof(VisualizerObjectSource),
+    //Target = typeof(Matrix<>),
+    TargetTypeName = "Emgu.CV.Matrix<,>, Emgu.CV.Platform.NetStandard",
+    Description = "Matrix debugger visualizer")]
+
 namespace Emgu.CV.DebuggerVisualizers
 {
    public sealed class MatrixVisualizer : DialogDebuggerVisualizer

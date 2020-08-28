@@ -1,39 +1,55 @@
 ﻿//----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Text;
+using Emgu.CV.Dnn;
+using Emgu.CV.ML;
 using Xamarin.Forms;
 
 namespace Emgu.CV.XamarinForms
 {
-	public class AboutPage : ContentPage
-	{
-		public AboutPage ()
-		{
+    public class AboutPage : ContentPage
+    {
+        public AboutPage()
+        {
 
-         String openclTxt = String.Format("Has OpenCL: {0}", CvInvoke.HaveOpenCL);
+            String openclTxt = String.Format("Has OpenCL: {0}", CvInvoke.HaveOpenCL);
 
-		   String lineBreak = "<br/>";
-         if (CvInvoke.HaveOpenCL)
-         {
-            openclTxt = String.Format("{0}{1}Use OpenCL: {2}{1}<textarea rows=\"5\">{3}</textarea>{1}",
-               openclTxt, lineBreak,
-               CvInvoke.UseOpenCL, 
-               CvInvoke.OclGetPlatformsSummary());
-         }
+            String lineBreak = "<br/>";
+            if (CvInvoke.HaveOpenCL)
+            {
+                openclTxt = String.Format("{0}{1}Use OpenCL: {2}{1}<textarea rows=\"5\">{3}</textarea>{1}",
+                   openclTxt, lineBreak,
+                   CvInvoke.UseOpenCL,
+                   CvInvoke.OclGetPlatformsSummary());
+            }
 
-         Content = 
-               new WebView()
-               {
-                  WidthRequest =  1000,
-                  HeightRequest = 1000,
-                  Source =  new HtmlWebViewSource()
+            
+            var dnnBackends = DnnInvoke.AvailableBackends;
+            List<String> dnnBackendsText = new List<string>();
+            foreach (var dnnBackend in dnnBackends)
+            {
+                dnnBackendsText.Add(String.Format("{0} - {1}", dnnBackend.Backend, dnnBackend.Target));
+            }
+
+            String dnnText = String.Join(";", dnnBackendsText.ToArray());
+            
+
+            String osDescription = Emgu.Util.Platform.OperationSystem.ToString();
+
+            Content =
+                  new WebView()
                   {
-                     Html =
-                     @"<html>
+                      WidthRequest = 1000,
+                      HeightRequest = 1000,
+                      Source = new HtmlWebViewSource()
+                      {
+                          Html =
+                        @"<html>
 <head>
 <style>body { background-color: #EEEEEE; }</style>
 <style type=""text/css"">
@@ -45,18 +61,27 @@ textarea { width: 100%; margin: 0; padding: 0; border - width: 0; }
 <a href=http://www.emgu.com>Visit our website</a> <br/><br/>
 <a href=mailto:support@emgu.com>Email Support</a> <br/><br/>
 <H4> OpenCL Info </H4>
-"
-                     + openclTxt + @"
+" + openclTxt + @"
+<H4> OS: </H4>
+" + osDescription + @"
+<H4> OS Architecture: </H4>
+" + RuntimeInformation.OSArchitecture + @"
+<H4> Framework Description: </H4>
+" + RuntimeInformation.FrameworkDescription + @"
+<H4> Process Architecture: </H4>
+" + RuntimeInformation.ProcessArchitecture + @"
+<H4> Dnn Backends: </H4>
+" + dnnText + @"
 <H4> Build Info </H4>
-<textarea rows=""30"">" 
-                     + CvInvoke.BuildInformation + @"
+<textarea rows=""30"">"
+                        + CvInvoke.BuildInformation + @"
 </textarea>
 </body>
 </html>"
-                  }
-               
-				
-			};
-		}
-	}
+                      }
+
+
+                  };
+        }
+    }
 }

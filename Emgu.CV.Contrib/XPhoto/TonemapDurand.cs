@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
 using System;
@@ -42,7 +42,8 @@ namespace Emgu.CV.XPhoto
         {
             if (IntPtr.Zero != _ptr)
             {
-                XPhotoInvoke.cveTonemapDurandRelease(ref _ptr, ref _sharedPtr);
+                XPhotoInvoke.cveTonemapDurandRelease(ref _sharedPtr);
+                _ptr = IntPtr.Zero;
                 _tonemapPtr = IntPtr.Zero;
                 _algorithmPtr = IntPtr.Zero;
             }
@@ -55,6 +56,6 @@ namespace Emgu.CV.XPhoto
         [DllImport(CvInvoke.ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]
         internal static extern IntPtr cveTonemapDurandCreate(float gamma, float contrast, float saturation, float sigmaSpace, float sigmaColor, ref IntPtr tonemap, ref IntPtr algorithm, ref IntPtr sharedPtr);
         [DllImport(CvInvoke.ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]
-        internal static extern void cveTonemapDurandRelease(ref IntPtr tonemap, ref IntPtr sharedPtr);
+        internal static extern void cveTonemapDurandRelease(ref IntPtr sharedPtr);
     }
 }

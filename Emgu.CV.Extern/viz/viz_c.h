@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.
 //
 //----------------------------------------------------------------------------
 
@@ -8,8 +8,88 @@
 #ifndef EMGU_VIZ_C_H
 #define EMGU_VIZ_C_H
 
+#include "opencv2/opencv_modules.hpp"
 #include "opencv2/core/core_c.h"
+
+#ifdef HAVE_OPENCV_VIZ
 #include "opencv2/viz.hpp"
+#else
+static inline CV_NORETURN void throw_no_viz() { CV_Error(cv::Error::StsBadFunc, "The library is compiled without Viz support"); }
+
+namespace cv
+{
+	namespace viz
+	{
+		class Viz3d
+		{
+		};
+
+		class WText
+		{
+		};
+
+		class WCoordinateSystem
+		{
+			
+		};
+
+		class WCloud
+		{
+			
+		};
+
+		class WCube
+		{
+			
+		};
+
+		class WCylinder
+		{
+			
+		};
+
+		class WCircle
+		{
+			
+		};
+
+		class WCone
+		{
+			
+		};
+
+		class WArrow
+		{
+			
+		};
+
+		class Widget
+		{
+			
+		};
+
+		class Widget2D
+		{
+			
+		};
+
+		class Widget3D
+		{
+
+		};
+		
+	}
+}
+
+namespace cv
+{
+	class Affine3d
+	{
+
+	};
+}
+
+#endif
 
 CVAPI(cv::viz::Viz3d*) cveViz3dCreate(cv::String* s);
 CVAPI(void) cveViz3dShowWidget(cv::viz::Viz3d* viz, cv::String* id, cv::viz::Widget* widget, cv::Affine3d* pose);

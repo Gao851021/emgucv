@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
 using System;
@@ -11,9 +11,7 @@ namespace Emgu.CV
     /// </summary>
     /// <typeparam name="TColor">The color of this map</typeparam>
     /// <typeparam name="TDepth">The depth of this map</typeparam>
-#if !(NETFX_CORE || NETSTANDARD1_4)
     [Serializable]
-#endif
     public class TimedImage<TColor, TDepth>
       : Image<TColor, TDepth>
       where TColor : struct, IColor

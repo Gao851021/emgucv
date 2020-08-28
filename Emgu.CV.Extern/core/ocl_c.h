@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.
 //
 //----------------------------------------------------------------------------
 
@@ -57,6 +57,29 @@ CVAPI(void) oclDeviceSet(cv::ocl::Device* device, void* p);
 CVAPI(const cv::ocl::Device*) oclDeviceGetDefault();
 CVAPI(void) oclDeviceRelease(cv::ocl::Device** device);
 CVAPI(void*) oclDeviceGetPtr(cv::ocl::Device* device);
+
+//----------------------------------------------------------------------------
+//
+//  OclContext
+//
+//----------------------------------------------------------------------------
+CVAPI(cv::ocl::Context*) oclContextCreate();
+CVAPI(const cv::ocl::Context*) oclContextGetDefault(bool initialize);
+CVAPI(void) oclContextRelease(cv::ocl::Context** context);
+CVAPI(const cv::ocl::Program*) oclContextGetProg(
+    cv::ocl::Context* context,
+    cv::ocl::ProgramSource* prog,
+    cv::String* buildopt, 
+    cv::String* errmsg);
+
+//----------------------------------------------------------------------------
+//
+//  OclProgram
+//
+//----------------------------------------------------------------------------
+CVAPI(cv::ocl::Program*) oclProgramCreate();
+CVAPI(void) oclProgramRelease(cv::ocl::Program** program);
+CVAPI(void) oclProgramGetBinary(cv::ocl::Program* program, std::vector<char>* binary);
 
 //----------------------------------------------------------------------------
 //

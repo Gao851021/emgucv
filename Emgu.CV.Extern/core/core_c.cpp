@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.
 //
 //----------------------------------------------------------------------------
 
@@ -110,7 +110,8 @@ int cveInputArrayGetDims(cv::_InputArray* ia, int i)
 void cveInputArrayGetSize(cv::_InputArray* ia, CvSize* size, int idx)
 {
 	cv::Size s = ia->size(idx);
-	*size = s;
+	size->width = s.width;
+	size->height = s.height;
 }
 int cveInputArrayGetDepth(cv::_InputArray* ia, int idx)
 {
@@ -357,6 +358,11 @@ void cveGemm(cv::_InputArray* src1, cv::_InputArray* src2, double alpha, cv::_In
 	cv::gemm(*src1, *src2, alpha, src3 ? *src3 : (cv::InputArray) cv::noArray(), beta, *dst, flags);
 }
 
+void cveScaleAdd(cv::_InputArray* src1, double alpha, cv::_InputArray* src2, cv::_OutputArray* dst)
+{
+	cv::scaleAdd(*src1, alpha, *src2, *dst);
+}
+
 void cveAddWeighted(cv::_InputArray* src1, double alpha, cv::_InputArray* src2, double beta, double gamma, cv::_OutputArray* dst, int dtype)
 {
 	cv::addWeighted(*src1, alpha, *src2, beta, gamma, *dst, dtype);
@@ -513,6 +519,15 @@ void cveHConcat(cv::_InputArray* src1, cv::_InputArray* src2, cv::_OutputArray* 
 void cveVConcat(cv::_InputArray* src1, cv::_InputArray* src2, cv::_OutputArray* dst)
 {
 	cv::vconcat(*src1, *src2, *dst);
+}
+
+void cveHConcat2(cv::_InputArray* src, cv::_OutputArray* dst)
+{
+	cv::hconcat(*src, *dst);
+}
+void cveVConcat2(cv::_InputArray* src, cv::_OutputArray* dst)
+{
+	cv::vconcat(*src, *dst);
 }
 
 
@@ -1007,3 +1022,39 @@ void cveMomentsRelease(cv::Moments** moments)
 	delete *moments;
 	*moments = 0;
 }
+
+void cveGetConfigDict(std::vector<cv::String>* key, std::vector<double>* value)
+{
+	key->clear();
+	value->clear();
+	
+	key->push_back("HAVE_OPENCV_VIZ");
+#ifdef HAVE_OPENCV_VIZ
+	value->push_back(1);
+#else
+	value->push_back(0);
+#endif
+	
+	key->push_back("HAVE_OPENCV_VIDEOIO");
+#ifdef HAVE_OPENCV_VIDEOIO
+	value->push_back(1);
+#else
+	value->push_back(0);
+#endif
+
+	key->push_back("HAVE_OPENCV_DNN");
+#ifdef HAVE_OPENCV_DNN
+	value->push_back(1);
+#else
+	value->push_back(0);
+#endif
+	
+}
+
+#if defined(CV_ICC) && defined(_M_IX86)
+//Fix for intel compiler: Intel compiler has not implemented __iso_volatile_load64 for x86 architecture.
+__int64 __iso_volatile_load64(const volatile __int64* _mem)
+{
+	return *_mem;
+}
+#endif

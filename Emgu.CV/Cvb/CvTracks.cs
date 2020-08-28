@@ -1,6 +1,8 @@
 ﻿//----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
+
+/*
 
 using System;
 using System.Collections.Generic;
@@ -116,11 +118,7 @@ namespace Emgu.CV.Cvb
          }
          else
          {
-#if NETFX_CORE || NETSTANDARD1_4 
-            track = Marshal.PtrToStructure<CvTrack>(trackPtr);
-#else
             track = (CvTrack)Marshal.PtrToStructure(trackPtr, typeof(CvTrack));
-#endif
             return true;
          }
       }
@@ -316,3 +314,5 @@ namespace Emgu.CV.Cvb
       #endregion
    }
 }
+
+*/

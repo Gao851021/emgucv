@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.
 //
 //----------------------------------------------------------------------------
 
@@ -65,8 +65,32 @@ CVAPI(void) drawKeypoints(
 	const CvScalar* color,
 	int flags);
 
-// Draws matches of keypints from two images on output image.
-CVAPI(void) drawMatchedFeatures(
+// Draws matches of keypoints from two images on output image.
+CVAPI(void) drawMatchedFeatures1(
+	cv::_InputArray* img1, 
+	const std::vector<cv::KeyPoint>* keypoints1,
+	cv::_InputArray* img2, 
+	const std::vector<cv::KeyPoint>* keypoints2,
+	std::vector< cv::DMatch >* matches,
+	cv::_InputOutputArray* outImg,
+	const CvScalar* matchColor, 
+	const CvScalar* singlePointColor,
+	std::vector< unsigned char >* matchesMask,
+	int flags);
+
+CVAPI(void) drawMatchedFeatures2(
+	cv::_InputArray* img1, 
+	const std::vector<cv::KeyPoint>* keypoints1,
+	cv::_InputArray* img2, 
+	const std::vector<cv::KeyPoint>* keypoints2,
+	std::vector< std::vector< cv::DMatch > >* matches,
+	cv::_InputOutputArray* outImg,
+	const CvScalar* matchColor, 
+	const CvScalar* singlePointColor,
+	std::vector< std::vector< unsigned char > >* matchesMask,
+	int flags);
+
+CVAPI(void) drawMatchedFeatures3(
 	cv::_InputArray* img1, const std::vector<cv::KeyPoint>* keypoints1,
 	cv::_InputArray* img2, const std::vector<cv::KeyPoint>* keypoints2,
 	std::vector< std::vector< cv::DMatch > >* matches,
@@ -179,4 +203,11 @@ CVAPI(void) cveAKAZEDetectorRelease(cv::Ptr<cv::AKAZE>** sharedPtr);
 CVAPI(cv::AgastFeatureDetector*) cveAgastFeatureDetectorCreate(int threshold, bool nonmaxSuppression, int type, cv::Feature2D** feature2D, cv::Ptr<cv::AgastFeatureDetector>** sharedPtr);
 CVAPI(void) cveAgastFeatureDetectorRelease(cv::Ptr<cv::AgastFeatureDetector>** sharedPtr);
 
+
+//SIFTDetector
+CVAPI(cv::SIFT*) cveSIFTCreate(
+	int nFeatures, int nOctaveLayers,
+	double contrastThreshold, double edgeThreshold,
+	double sigma, cv::Feature2D** feature2D, cv::Ptr<cv::SIFT>** sharedPtr);
+CVAPI(void) cveSIFTRelease(cv::Ptr<cv::SIFT>** sharedPtr);
 #endif

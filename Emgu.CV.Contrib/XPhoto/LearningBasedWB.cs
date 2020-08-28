@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
 using System;
@@ -37,9 +37,18 @@ namespace Emgu.CV.XPhoto
         {
             if (_ptr != IntPtr.Zero)
             {
-                XPhotoInvoke.cveLearningBasedWBRelease(ref _ptr, ref _sharedPtr);
+                XPhotoInvoke.cveLearningBasedWBRelease(ref _sharedPtr);
+                _ptr = IntPtr.Zero;
             }
             base.DisposeObject();
         }
+    }
+
+    public static partial class XPhotoInvoke
+    {
+        [DllImport(CvInvoke.ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]
+        internal static extern IntPtr cveLearningBasedWBCreate(ref IntPtr whiteBalancer, ref IntPtr sharedPtr);
+        [DllImport(CvInvoke.ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]
+        internal static extern void cveLearningBasedWBRelease(ref IntPtr sharedPtr);
     }
 }

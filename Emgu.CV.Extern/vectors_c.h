@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.
 //
 //----------------------------------------------------------------------------
 
@@ -9,6 +9,8 @@
 #define EMGU_VECTORS_C_H
 
 #include <vector>
+
+#include "opencv2/opencv_modules.hpp"
 #include "opencv2/core/core_c.h"
 #include "opencv2/features2d/features2d.hpp"
 #include "opencv2/objdetect/objdetect.hpp"

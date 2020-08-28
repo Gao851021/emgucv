@@ -8,8 +8,7 @@
   <PropertyGroup Label="Configuration">
     <Import_RootNamespace>Emgu.Util</Import_RootNamespace>
   </PropertyGroup>
-    <ItemGroup>
+  <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)*.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Android\*.cs" />
   </ItemGroup>
 </Project>

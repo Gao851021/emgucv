@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -125,11 +125,7 @@ namespace Emgu.CV.Util
                result = (T) ((Object) Marshal.PtrToStringAnsi(e.Value));
             } else
             {
-#if NETFX_CORE || NETSTANDARD1_4
-               result = Marshal.PtrToStructure<T>(e.Value);
-#else
-               result = (T) Marshal.PtrToStructure(e.Value, typeof(T));
-#endif
+                result = Marshal.PtrToStructure<T>(e.Value);
             }
             OnDataReceived(this, new EventArgs<T>(result));
          }
@@ -179,7 +175,7 @@ namespace Emgu.CV.Util
       public static DataCallback Handler = DataHandler;
 
 #if __IOS__
-      [ObjCRuntime.MonoPInvokeCallback(typeof(DataLoggerHelper.DataCallback))]
+      //[ObjCRuntime.MonoPInvokeCallback(typeof(DataLoggerHelper.DataCallback))]
 #endif
       public static void DataHandler(IntPtr data, int loggerId)
       {

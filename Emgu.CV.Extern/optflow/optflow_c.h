@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.
 //
 //----------------------------------------------------------------------------
 
@@ -9,7 +9,24 @@
 #define EMGU_VIDEO_C_H
 
 #include "opencv2/core/core_c.h"
+
+#ifdef HAVE_OPENCV_OPTFLOW
 #include "opencv2/optflow.hpp"
+#else
+static inline CV_NORETURN void throw_no_optflow() { CV_Error(cv::Error::StsBadFunc, "The library is compiled without optflow."); }
+namespace cv {
+class DenseOpticalFlow{};
+class SparseOpticalFlow{};
+namespace optflow {
+class DualTVL1OpticalFlow {};
+class RLOFOpticalFlowParameter {};
+class DenseRLOFOpticalFlow {};
+class SparseRLOFOpticalFlow {};
+enum SolverType {};
+enum SupportRegionType {};
+}
+}
+#endif
 
 CVAPI(void) cveUpdateMotionHistory(cv::_InputArray* silhouette, cv::_InputOutputArray* mhi, double timestamp, double duration);
 CVAPI(void) cveCalcMotionGradient(cv::_InputArray* mhi, cv::_OutputArray* mask, cv::_OutputArray* orientation, double delta1, double delta2, int apertureSize);

@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
 using System;
@@ -287,10 +287,10 @@ namespace Emgu.CV.Test
 
                     Rectangle rect = new Rectangle(Point.Empty, modelImage.Size);
                     PointF[] pts = new PointF[] {
-               new PointF(rect.Left, rect.Bottom),
-               new PointF(rect.Right, rect.Bottom),
-               new PointF(rect.Right, rect.Top),
-               new PointF(rect.Left, rect.Top)};
+                        new PointF(rect.Left, rect.Bottom),
+                        new PointF(rect.Right, rect.Bottom),
+                        new PointF(rect.Right, rect.Top),
+                        new PointF(rect.Left, rect.Top)};
 
                     Mat homography = null;
 
@@ -323,7 +323,7 @@ namespace Emgu.CV.Test
                     }
                     stopwatch.Stop();
                     EmguAssert.WriteLine(String.Format("Time for feature matching: {0} milli-sec", stopwatch.ElapsedMilliseconds));
-
+                    
                     bool success = false;
                     if (homography != null)
                     {
@@ -335,12 +335,7 @@ namespace Emgu.CV.Test
                             points[i].Y += modelImage.Height;
 
                         res.DrawPolyline(
-#if NETFX_CORE
-                     Extensions.
-#else
-                     Array.
-#endif
-                     ConvertAll<PointF, Point>(points, Point.Round), true, new Gray(255.0), 5);
+                            Array.ConvertAll<PointF, Point>(points, Point.Round), true, new Gray(255.0), 5);
 
                         success = true;
                     }

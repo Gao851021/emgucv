@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
 using System;
@@ -22,5 +22,14 @@ namespace Emgu.CV.Face
         /// The native pointer to the BasicFaceRecognizer object 
         /// </summary>
         protected IntPtr _basicFaceRecognizerPtr;
+
+        /// <summary>
+        /// Release the unmanaged memory associated with this BasicFaceRecognizer
+        /// </summary>
+        protected override void DisposeObject()
+        {
+            _basicFaceRecognizerPtr = IntPtr.Zero;
+            base.DisposeObject();
+        }
     }
 }

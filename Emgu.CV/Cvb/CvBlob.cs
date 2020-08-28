@@ -1,6 +1,8 @@
 ﻿//----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
+
+/*
 
 using System;
 using System.Drawing;
@@ -196,3 +198,5 @@ namespace Emgu.CV.Cvb
       internal extern static void cvbCvBlobGetContour(IntPtr blob, IntPtr contour);
    }
 }
+
+*/

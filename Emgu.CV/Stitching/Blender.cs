@@ -1,5 +1,5 @@
 ﻿//----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -50,7 +50,7 @@ namespace Emgu.CV.Stitching
         /// Create a simple blender which mixes images at its borders
         /// </summary>
         /// <param name="sharpness">Sharpness</param>
-        public FeatherBlender(float sharpness)
+        public FeatherBlender(float sharpness = 0.02f)
         {
             _ptr = StitchingInvoke.cveFeatherBlenderCreate(sharpness, ref _blenderPtr);
         }

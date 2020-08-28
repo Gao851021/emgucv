@@ -21,7 +21,7 @@
     <MandroidI18n />
     <JavaMaximumHeapSize />
     <JavaOptions />
-    <TargetFrameworkVersion>v9.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v10.0</TargetFrameworkVersion>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
   </PropertyGroup>
@@ -38,6 +38,9 @@
     <AotAssemblies>false</AotAssemblies>
     <EnableLLVM>false</EnableLLVM>
     <BundleAssemblies>false</BundleAssemblies>
+    <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
+    <AndroidSupportedAbis>
+    </AndroidSupportedAbis>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -51,6 +54,8 @@
     <AotAssemblies>false</AotAssemblies>
     <EnableLLVM>false</EnableLLVM>
     <BundleAssemblies>false</BundleAssemblies>
+    <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
+    <AndroidSupportedAbis>armeabi-v7a;x86;x86_64;arm64-v8a</AndroidSupportedAbis>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Java.Interop" />
@@ -84,22 +89,16 @@
     <AndroidResource Include="Resources\drawable\ic_launcher.png" />
   </ItemGroup>
   <ItemGroup>
-    <AndroidAsset Include="..\..\..\opencv\data\haarcascades\haarcascade_eye.xml">
-      <Link>Assets\haarcascade_eye.xml</Link>
-    </AndroidAsset>
-    <AndroidAsset Include="..\..\..\opencv\data\haarcascades\haarcascade_frontalface_default.xml">
-      <Link>Assets\haarcascade_frontalface_default.xml</Link>
-    </AndroidAsset>
-    <AndroidAsset Include="..\..\FaceDetection\lena.jpg">
+    <AndroidAsset Include="..\Core\lena.jpg">
       <Link>Assets\lena.jpg</Link>
     </AndroidAsset>
-    <AndroidAsset Include="..\..\PedestrianDetection\pedestrian.png">
+    <AndroidAsset Include="..\Core\pedestrian.png">
       <Link>Assets\pedestrian.png</Link>
     </AndroidAsset>
-    <AndroidAsset Include="..\..\FeatureMatching\box.png">
+    <AndroidAsset Include="..\Core\box.png">
       <Link>Assets\box.png</Link>
     </AndroidAsset>
-    <AndroidAsset Include="..\..\FeatureMatching\box_in_scene.png">
+    <AndroidAsset Include="..\Core\box_in_scene.png">
       <Link>Assets\box_in_scene.png</Link>
     </AndroidAsset>
     <None Include="Properties\AndroidManifest.xml" />
@@ -122,138 +121,162 @@
       <Version>2.1.0.4</Version>
     </PackageReference>
     <PackageReference Include="Xam.Plugin.Media">
-      <Version>4.0.1.5</Version>
+      <Version>5.0.1</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Arch.Core.Common">
-      <Version>1.1.1.1</Version>
+      <Version>1.1.1.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Arch.Core.Runtime">
-      <Version>1.1.1.1</Version>
+      <Version>1.1.1.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Arch.Lifecycle.Common">
-      <Version>1.1.1.1</Version>
+      <Version>1.1.1.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Arch.Lifecycle.LiveData">
-      <Version>1.1.1.1</Version>
+      <Version>1.1.1.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Arch.Lifecycle.LiveData.Core">
-      <Version>1.1.1.1</Version>
+      <Version>1.1.1.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Arch.Lifecycle.Runtime">
-      <Version>1.1.1.1</Version>
+      <Version>1.1.1.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Arch.Lifecycle.ViewModel">
-      <Version>1.1.1.1</Version>
+      <Version>1.1.1.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.Animated.Vector.Drawable">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.Annotations">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.AsyncLayoutInflater">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.Collections">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.Compat">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.CoordinaterLayout">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.Core.UI">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.Core.Utils">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.CursorAdapter">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.CustomTabs">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.CustomView">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.Design">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.DocumentFile">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.DrawerLayout">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.Fragment">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.Interpolator">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.Loader">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.LocalBroadcastManager">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.Media.Compat">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.Print">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.SlidingPaneLayout">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.SwipeRefreshLayout">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.Transition">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.v4">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.v7.AppCompat">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.v7.CardView">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.v7.MediaRouter">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.v7.Palette">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.v7.RecyclerView">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.Vector.Drawable">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.VersionedParcelable">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Android.Support.ViewPager">
-      <Version>28.0.0.1</Version>
+      <Version>28.0.0.3</Version>
+    </PackageReference>
+    <PackageReference Include="Xamarin.AndroidX.AppCompat.Resources">
+      <Version>1.1.0.1</Version>
+    </PackageReference>
+    <PackageReference Include="Xamarin.AndroidX.MediaRouter">
+      <Version>1.1.0.2</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Build.Download">
-      <Version>0.4.11</Version>
+      <Version>0.10.0</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Forms">
-      <Version>4.0.0.540366</Version>
+      <Version>4.8.0.1269</Version>
+    </PackageReference>
+    <PackageReference Include="Xamarin.Plugin.FilePicker">
+      <Version>2.1.41</Version>
     </PackageReference>
   </ItemGroup>
-  <Import Project="..\..\..\Emgu.CV\Emgu.CV.projitems" Label="Shared" />
-  <Import Project="..\..\..\Emgu.CV.OCR\Emgu.CV.OCR.projitems" Label="Shared" />
-  <Import Project="..\..\..\Emgu.CV.Contrib\Emgu.CV.Contrib.projitems" Label="Shared" />
+  <ItemGroup>
+    <AndroidAsset Include="..\Core\stop-sign.jpg">
+      <Link>Assets\stop-sign.jpg</Link>
+    </AndroidAsset>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Emgu.CV.Platform\Android\Emgu.CV.Platform.Android.csproj">
+      <Project>{5f102c71-65c3-4d77-ae48-29c1e75f82be}</Project>
+      <Name>Emgu.CV.Platform.Android</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\Emgu.CV.Platform\NetStandard\Emgu.CV.Platform.Netstandard.csproj">
+      <Project>{04e2a4f0-b178-4c96-b792-91db114896b2}</Project>
+      <Name>Emgu.CV.Platform.Netstandard</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidAsset Include="..\Core\cars_license_plate.png">
+      <Link>Assets\cars_license_plate.png</Link>
+    </AndroidAsset>
+  </ItemGroup>
   <Import Project="..\Core\Emgu.CV.XamarinForms.projitems" Label="Shared" />
-  <Import Project="..\..\..\Emgu.Util\Emgu.Util.projitems" Label="Shared" />
-  <Import Project="..\..\..\Emgu.CV.Cuda\Emgu.CV.Cuda.projitems" Label="Shared" />
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <Import Project="..\..\..\nugetpackages\Xamarin.Android.Support.Annotations.27.0.2\build\MonoAndroid81\Xamarin.Android.Support.Annotations.targets" Condition="Exists('..\..\..\nugetpackages\Xamarin.Android.Support.Annotations.27.0.2\build\MonoAndroid81\Xamarin.Android.Support.Annotations.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

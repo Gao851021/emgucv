@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.
 //
 //  Vector of ${VECTOR_NAME}
 //
@@ -13,6 +13,8 @@
 #define EMGU_VECTOR_${VECTOR_NAME}_H
 
 #include "vectors_c.h"
+
+${COMPILATION_CONDITION_C_OPEN}
 
 ${VECTOR_ADDITIONAL_INCLUDE}
 
@@ -45,11 +47,49 @@ CVAPI(void) VectorOf${VECTOR_NAME}GetItem(std::vector<  ${VECTOR_ELEMENT} >* vec
 
 CVAPI(void) VectorOf${VECTOR_NAME}GetItemPtr(std::vector<  ${VECTOR_ELEMENT} >* vec, int index,  ${VECTOR_ELEMENT}** element);
 
-CVAPI(cv::_InputArray*) cvInputArrayFromVectorOf${VECTOR_NAME}(std::vector< ${VECTOR_ELEMENT} >* vec);
+CVAPI(cv::_InputArray*) cveInputArrayFromVectorOf${VECTOR_NAME}(std::vector< ${VECTOR_ELEMENT} >* vec);
 
-CVAPI(cv::_OutputArray*) cvOutputArrayFromVectorOf${VECTOR_NAME}(std::vector< ${VECTOR_ELEMENT} >* vec);
+CVAPI(cv::_OutputArray*) cveOutputArrayFromVectorOf${VECTOR_NAME}(std::vector< ${VECTOR_ELEMENT} >* vec);
 
-CVAPI(cv::_InputOutputArray*) cvInputOutputArrayFromVectorOf${VECTOR_NAME}(std::vector< ${VECTOR_ELEMENT} >* vec);
+CVAPI(cv::_InputOutputArray*) cveInputOutputArrayFromVectorOf${VECTOR_NAME}(std::vector< ${VECTOR_ELEMENT} >* vec);
 
 CVAPI(int) VectorOf${VECTOR_NAME}SizeOfItemInBytes();
+
+#else
+
+CVAPI(void*) VectorOf${VECTOR_NAME}Create();
+
+CVAPI(void*) VectorOf${VECTOR_NAME}CreateSize(int size);
+
+CVAPI(int) VectorOf${VECTOR_NAME}GetSize(void* v);
+
+CVAPI(void) VectorOf${VECTOR_NAME}Push(void* v, void* value);
+
+CVAPI(void) VectorOf${VECTOR_NAME}PushMulti(void* v, void* values, int count);
+
+CVAPI(void) VectorOf${VECTOR_NAME}PushVector(void* v, void* other);
+
+CVAPI(void) VectorOf${VECTOR_NAME}Clear(void* v);
+
+CVAPI(void) VectorOf${VECTOR_NAME}Release(void** v);
+
+CVAPI(void) VectorOf${VECTOR_NAME}CopyData(void* v,  void* data);
+
+CVAPI(void*) VectorOf${VECTOR_NAME}GetStartAddress(void* v);
+
+CVAPI(void) VectorOf${VECTOR_NAME}GetItem(void* vec, int index, void* element);
+
+CVAPI(void) VectorOf${VECTOR_NAME}GetItemPtr(void* vec, int index, void** element);
+
+CVAPI(cv::_InputArray*) cveInputArrayFromVectorOf${VECTOR_NAME}(void* vec);
+
+CVAPI(cv::_OutputArray*) cveOutputArrayFromVectorOf${VECTOR_NAME}(void* vec);
+
+CVAPI(cv::_InputOutputArray*) cveInputOutputArrayFromVectorOf${VECTOR_NAME}(void* vec);
+
+CVAPI(int) VectorOf${VECTOR_NAME}SizeOfItemInBytes();
+
+
+${COMPILATION_CONDITION_C_CLOSE}
+
 #endif

@@ -1,5 +1,5 @@
 ﻿//----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
 using System;
@@ -11,12 +11,6 @@ using Emgu.CV.Structure;
 using Emgu.CV.Util;
 using Emgu.CV.CvEnum;
 using Emgu.Util;
-#if __ANDROID__
-using Bitmap = Android.Graphics.Bitmap;
-#elif __IOS__
-using UIKit;
-using CoreGraphics;
-#endif
 
 namespace Emgu.CV
 {
@@ -24,16 +18,10 @@ namespace Emgu.CV
     /// The equivalent of cv::Mat, should only be used if you know what you are doing.
     /// In most case you should use the Matrix class instead
     /// </summary>
-#if !(NETFX_CORE || NETSTANDARD1_4)
     [Serializable]
     [DebuggerTypeProxy(typeof(UMat.DebuggerProxy))]
-#endif
-    public partial class UMat : MatDataAllocator, IEquatable<UMat>, IInputOutputArray
-#if !(NETFX_CORE || NETSTANDARD1_4)
-, ISerializable
-#endif
+    public partial class UMat : UnmanagedObject, IEquatable<UMat>, IInputOutputArray, ISerializable
     {
-#if !(NETFX_CORE || NETSTANDARD1_4)
         #region Implement ISerializable interface
         /// <summary>
         /// Constructor used to deserialize runtime serialized object
@@ -76,7 +64,6 @@ namespace Emgu.CV
         }
 
         #endregion
-#endif
 
         /// <summary>
         /// Allocation usage.
@@ -185,7 +172,7 @@ namespace Emgu.CV
         /// <param name="umat">The umat where the new UMat header will share data from</param>
         /// <param name="rowRange">The region of interest</param>
         /// <param name="colRange">The region of interest</param>
-        public UMat(UMat umat, Range rowRange, Range colRange)
+        public UMat(UMat umat, Emgu.CV.Structure.Range rowRange, Emgu.CV.Structure.Range colRange)
            : this(UMatInvoke.cveUMatCreateFromRange(umat.Ptr, ref rowRange, ref colRange), true)
         {
         }
@@ -372,7 +359,7 @@ namespace Emgu.CV
             //if (_oclMatAllocator != IntPtr.Zero)
             //    MatDataAllocatorInvoke.cveMatAllocatorRelease(ref _oclMatAllocator);
 
-            base.DisposeObject();
+            //base.DisposeObject();
 
         }
 
@@ -534,28 +521,6 @@ namespace Emgu.CV
             }
         }
 
-
-#if !(__UNIFIED__ || NETFX_CORE || NETSTANDARD1_4 || UNITY_ANDROID || UNITY_IOS || UNITY_STANDALONE || UNITY_METRO || UNITY_EDITOR || __IOS__)
-        /// <summary>
-        /// The Get property provide a more efficient way to convert Image&lt;Gray, Byte&gt;, Image&lt;Bgr, Byte&gt; and Image&lt;Bgra, Byte&gt; into Bitmap
-        /// such that the image data is <b>shared</b> with Bitmap. 
-        /// If you change the pixel value on the Bitmap, you change the pixel values on the Image object as well!
-        /// For other types of image this property has the same effect as ToBitmap()
-        /// <b>Take extra caution not to use the Bitmap after the Image object is disposed</b>
-        /// The Set property convert the bitmap to this Image type.
-        /// </summary>
-        public Bitmap Bitmap
-        {
-            get
-            {
-                using (Mat tmp = GetMat(CvEnum.AccessType.Read))
-                {
-                    return tmp.Bitmap;
-                }
-            }
-        }
-#endif
-
         /// <summary>
         /// Returns the min / max location and values for the image
         /// </summary>
@@ -708,7 +673,7 @@ namespace Emgu.CV
         /// <returns>A matrix header for the specified matrix row.</returns>
         public UMat Row(int y)
         {
-            return new UMat(this, new Range(y, y + 1), Range.All);
+            return new UMat(this, new Emgu.CV.Structure.Range(y, y + 1), Emgu.CV.Structure.Range.All);
         }
 
         /// <summary>
@@ -718,7 +683,7 @@ namespace Emgu.CV
         /// <returns>A matrix header for the specified matrix column.</returns>
         public UMat Col(int x)
         {
-            return new UMat(this, Range.All, new Range(x, x + 1));
+            return new UMat(this, Emgu.CV.Structure.Range.All, new Emgu.CV.Structure.Range(x, x + 1));
         }
 
         /// <summary>
@@ -1082,7 +1047,6 @@ namespace Emgu.CV
 
         #endregion
 
-
         internal class DebuggerProxy
         {
             private UMat _v;
@@ -1092,11 +1056,13 @@ namespace Emgu.CV
                 _v = v;
             }
 
-            public Array Data
+            public Mat Mat
             {
                 get
                 {
-                    return _v.GetData(true);
+                    Mat m = new Mat();
+                    _v.CopyTo(m);
+                    return m;
                 }
             }
         }
@@ -1136,7 +1102,7 @@ namespace Emgu.CV
         internal extern static IntPtr cveUMatCreateFromRect(IntPtr mat, ref Rectangle roi);
 
         [DllImport(CvInvoke.ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]
-        internal extern static IntPtr cveUMatCreateFromRange(IntPtr mat, ref Range rowRange, ref Range colRange);
+        internal extern static IntPtr cveUMatCreateFromRange(IntPtr mat, ref Emgu.CV.Structure.Range rowRange, ref Emgu.CV.Structure.Range colRange);
 
         [DllImport(CvInvoke.ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]
         internal extern static void cveUMatSetTo(IntPtr mat, IntPtr value, IntPtr mask);

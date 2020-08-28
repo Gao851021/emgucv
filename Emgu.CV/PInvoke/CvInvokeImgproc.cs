@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
 using System;
@@ -1344,6 +1344,7 @@ namespace Emgu.CV
         /// <param name="threshold">Threshold value</param>
         /// <param name="maxValue">Maximum value to use with CV_THRESH_BINARY and CV_THRESH_BINARY_INV thresholding types</param>
         /// <param name="thresholdType">Thresholding type </param>
+        /// <returns>The computed threshold value if Otsu's or Triangle methods used.</returns>
         public static double Threshold(
            IInputArray src,
            IOutputArray dst,
@@ -1519,128 +1520,6 @@ namespace Emgu.CV
            IntPtr scanner,
            IntPtr newContour);*/
 
-#if !(__UNIFIED__ || __ANDROID__ || NETFX_CORE || NETSTANDARD1_4 || UNITY_ANDROID || UNITY_IOS || UNITY_STANDALONE || UNITY_METRO || UNITY_EDITOR)
-        /// <summary>
-        /// Convert raw data to bitmap
-        /// </summary>
-        /// <param name="scan0">The pointer to the raw data</param>
-        /// <param name="step">The step</param>
-        /// <param name="size">The size of the image</param>
-        /// <param name="srcColorType">The source image color type</param>
-        /// <param name="numberOfChannels">The number of channels</param>
-        /// <param name="srcDepthType">The source image depth type</param>
-        /// <param name="tryDataSharing">Try to create Bitmap that shares the data with the image</param>
-        /// <returns>The Bitmap</returns>
-        public static Bitmap RawDataToBitmap(IntPtr scan0, int step, Size size, Type srcColorType, int numberOfChannels, Type srcDepthType, bool tryDataSharing = false)
-        {
-            if (tryDataSharing)
-            {
-                if (srcColorType == typeof(Gray) && srcDepthType == typeof(Byte))
-                {   //Grayscale of Bytes
-                    Bitmap bmpGray = new Bitmap(
-                        size.Width,
-                        size.Height,
-                        step,
-                        System.Drawing.Imaging.PixelFormat.Format8bppIndexed,
-                        scan0
-                        );
-
-                    bmpGray.Palette = CvToolbox.GrayscalePalette;
-
-                    return bmpGray;
-                }
-                // Mono in Linux doesn't support scan0 constructure with Format24bppRgb, use ToBitmap instead
-                // See https://bugzilla.novell.com/show_bug.cgi?id=363431
-                // TODO: check mono buzilla Bug 363431 to see when it will be fixed 
-                else if (
-                   Emgu.Util.Platform.OperationSystem == Emgu.Util.TypeEnum.OS.Windows &&
-                   Emgu.Util.Platform.ClrType == Emgu.Util.TypeEnum.ClrType.DotNet &&
-                   srcColorType == typeof(Bgr) && srcDepthType == typeof(Byte)
-                   && (step & 3) == 0)
-                {   //Bgr byte    
-                    return new Bitmap(
-                        size.Width,
-                        size.Height,
-                        step,
-                        System.Drawing.Imaging.PixelFormat.Format24bppRgb,
-                        scan0);
-                }
-                else if (srcColorType == typeof(Bgra) && srcDepthType == typeof(Byte))
-                {   //Bgra byte
-                    return new Bitmap(
-                        size.Width,
-                        size.Height,
-                        step,
-                        System.Drawing.Imaging.PixelFormat.Format32bppArgb,
-                        scan0);
-                }
-
-                //PixelFormat.Format16bppGrayScale is not supported in .NET
-                //else if (typeof(TColor) == typeof(Gray) && typeof(TDepth) == typeof(UInt16))
-                //{
-                //   return new Bitmap(
-                //      size.width,
-                //      size.height,
-                //      step,
-                //      PixelFormat.Format16bppGrayScale;
-                //      scan0);
-                //}
-            }
-
-            System.Drawing.Imaging.PixelFormat format;  //= System.Drawing.Imaging.PixelFormat.Undefined;
-
-            if (srcColorType == typeof(Gray)) // if this is a gray scale image
-            {
-                format = System.Drawing.Imaging.PixelFormat.Format8bppIndexed;
-            }
-            else if (srcColorType == typeof(Bgra)) //if this is Bgra image
-            {
-                format = System.Drawing.Imaging.PixelFormat.Format32bppArgb;
-            }
-            else if (srcColorType == typeof(Bgr))  //if this is a Bgr Byte image
-            {
-                format = System.Drawing.Imaging.PixelFormat.Format24bppRgb;
-            }
-            else
-            {
-                using (Mat m = new Mat(size.Height, size.Width, CvInvoke.GetDepthType(srcDepthType), numberOfChannels, scan0, step))
-                using (Mat m2 = new Mat())
-                {
-                    CvInvoke.CvtColor(m, m2, srcColorType, typeof(Bgr));
-                    return RawDataToBitmap(m2.DataPointer, m2.Step, m2.Size, typeof(Bgr), 3, srcDepthType, false);
-                }
-            }
-
-            Bitmap bmp = new Bitmap(size.Width, size.Height, format);
-            System.Drawing.Imaging.BitmapData data = bmp.LockBits(
-                new Rectangle(Point.Empty, size),
-                 System.Drawing.Imaging.ImageLockMode.WriteOnly,
-                format);
-            using (Mat bmpMat = new Mat(size.Height, size.Width, CvEnum.DepthType.Cv8U, numberOfChannels, data.Scan0, data.Stride))
-            using (Mat dataMat = new Mat(size.Height, size.Width, CvInvoke.GetDepthType(srcDepthType), numberOfChannels, scan0, step))
-            {
-                if (srcDepthType == typeof(Byte))
-                    dataMat.CopyTo(bmpMat);
-                else
-                {
-
-                    double scale = 1.0, shift = 0.0;
-                    RangeF range = dataMat.GetValueRange();
-                    if (range.Max > 255.0 || range.Min < 0)
-                    {
-                        scale = range.Max.Equals(range.Min) ? 0.0 : 255.0 / (range.Max - range.Min);
-                        shift = scale.Equals(0) ? range.Min : -range.Min * scale;
-                    }
-                    CvInvoke.ConvertScaleAbs(dataMat, bmpMat, scale, shift);
-                }
-            }
-            bmp.UnlockBits(data);
-
-            if (format == System.Drawing.Imaging.PixelFormat.Format8bppIndexed)
-                bmp.Palette = CvToolbox.GrayscalePalette;
-            return bmp;
-        }
-#endif
 
         /*
         /// <summary>
@@ -1721,7 +1600,7 @@ namespace Emgu.CV
         public static void HoughCircles(
            IInputArray image,
            IOutputArray circles,
-           CvEnum.HoughType method,
+           CvEnum.HoughModes method,
            double dp,
            double minDist,
            double param1 = 100,
@@ -1748,7 +1627,7 @@ namespace Emgu.CV
         /// <returns>The circles detected</returns>
         public static CircleF[] HoughCircles(
            IInputArray image,
-           CvEnum.HoughType method,
+           CvEnum.HoughModes method,
            double dp,
            double minDist,
            double param1 = 100,
@@ -1773,7 +1652,7 @@ namespace Emgu.CV
         private static extern void cveHoughCircles(
            IntPtr image,
            IntPtr circles,
-           CvEnum.HoughType method,
+           CvEnum.HoughModes method,
            double dp,
            double minDist,
            double param1,
@@ -2229,7 +2108,7 @@ namespace Emgu.CV
         /// <summary>
         /// Calculates a histogram of a set of arrays.
         /// </summary>
-        /// <param name="images">Source arrays. They all should have the same depth, CV_8U or CV_32F , and the same size. Each of them can have an arbitrary number of channels.</param>
+        /// <param name="images">Source arrays. They all should have the same depth, CV_8U, CV_16U or CV_32F , and the same size. Each of them can have an arbitrary number of channels.</param>
         /// <param name="channels">List of the channels used to compute the histogram. </param>
         /// <param name="mask">Optional mask. If the matrix is not empty, it must be an 8-bit array of the same size as images[i] . The non-zero mask elements mark the array elements counted in the histogram.</param>
         /// <param name="hist">Output histogram</param>

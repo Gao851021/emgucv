@@ -1,5 +1,5 @@
 # --------------------------------------------------------
-#  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.
+#  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.
 # --------------------------------------------------------
 
 PROJECT(libleptonica)
@@ -90,6 +90,7 @@ if(LEPT_USE_TIFF)
   include_directories(${CMAKE_BINARY_DIR}/opencv/3rdparty/libtiff)
 endif()
 
+include_directories(${OPENCV_SUBFOLDER}/3rdparty/zlib)
 
 add_library(${the_target} STATIC ${lepton_srcs} ${lepton_hdrs})
 

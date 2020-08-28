@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
 using System;
@@ -90,6 +90,10 @@ namespace Emgu.CV.CvEnum
         /// <summary>
         /// TwilightShifted
         /// </summary>
-        TwilightShifted = 19
+        TwilightShifted = 19,
+        /// <summary>
+        /// Turbo
+        /// </summary>
+        Turbo = 20
     }
 }

@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.
 //
 //----------------------------------------------------------------------------
 
@@ -8,8 +8,32 @@
 #ifndef EMGU_OBJDETECT_C_H
 #define EMGU_OBJDETECT_C_H
 
+#include "opencv2/opencv_modules.hpp"
 #include "opencv2/core/core_c.h"
+
+#ifdef HAVE_OPENCV_TEXT
 #include "opencv2/text/erfilter.hpp"
+#else
+
+static inline CV_NORETURN void throw_no_text() { CV_Error(cv::Error::StsBadFunc, "The library is compiled without Text support"); }
+
+namespace cv
+{
+	namespace text
+	{
+		class ERFilter
+		{
+			
+		};
+
+		class ERStat
+		{
+			
+		};
+	}
+}
+#endif
+
 #include "vectors_c.h"
 
 //ERFilter

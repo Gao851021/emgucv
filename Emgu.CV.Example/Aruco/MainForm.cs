@@ -1,5 +1,5 @@
 ﻿//----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
 using System;
@@ -14,6 +14,7 @@ using Emgu.CV;
 using Emgu.CV.Aruco;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
+using Emgu.CV.UI;
 using Emgu.CV.Util;
 
 namespace Aruco
@@ -93,7 +94,7 @@ namespace Aruco
 
             Mat boardImage = new Mat();
             ArucoBoard.Draw(imageSize, boardImage, margins, borderBits);
-            bmIm = boardImage.Bitmap;
+            bmIm = boardImage.ToBitmap();
             PrintImage();
 
         }

@@ -88,7 +88,7 @@ ENDMACRO(ADD_CS_DIRECTORY_TO_DEPLOY)
 
 # ----- end support macros -----
 MACRO(ADD_CS_MODULE target source)
-  
+
 ENDMACRO(ADD_CS_MODULE)
 
 MACRO(ADD_CS_REFERENCES references)
@@ -132,45 +132,115 @@ MACRO(SET_CS_TARGET_FRAMEWORK)
   ENDIF()
   
   IF(NOT NETFX_CORE)
-    LIST(APPEND FRAMEWORK_REFERENCES  System.Core.dll System.Xml.dll System.Drawing.dll System.Data.dll System.ServiceModel.dll System.Xml.Linq.dll)
+    LIST(APPEND FRAMEWORK_REFERENCES System.Core.dll System.Xml.dll System.Drawing.dll System.Data.dll System.ServiceModel.dll System.Xml.Linq.dll)
   ENDIF()
   #MESSAGE(STATUS "FRAMEWORK reference: ver: ${version}; ref: ${FRAMEWORK_REFERENCES}")
   ADD_CS_FRAMEWORK_REFERENCES("${version}" "${FRAMEWORK_REFERENCES}")
 ENDMACRO(SET_CS_TARGET_FRAMEWORK)
 
+SET(DEFAULT_CS_CONFIG "Release" CACHE STRING "Default C# build configuration")
+
 MACRO(BUILD_CSPROJ target csproj_file extra_flags)
+  IF(APPLE)
+    SET(MAC_FRESH_SHELL_PREFIX env -i zsh)
+  ENDIF()
+  
   ADD_CUSTOM_TARGET (${target} ${ARGV3} SOURCES ${csproj_file} )
   
-  IF (WIN32 AND MSVC AND NOT ("${CMAKE_VS_DEVENV_COMMAND}" STREQUAL ""))
+  #  IF (WIN32 AND MSVC AND NOT ("${CMAKE_VS_DEVENV_COMMAND}" STREQUAL ""))
+  #    ADD_CUSTOM_COMMAND (
+  #      TARGET ${target}
+  #      COMMAND ${CMAKE_VS_DEVENV_COMMAND} /Build ${DEFAULT_CS_CONFIG} ${extra_flags} ${csproj_file}
+  #      COMMENT "Building ${target} with ${CMAKE_VS_DEVENV_COMMAND}")
+  IF(MSBUILD_EXECUTABLE)
+    #MESSAGE(STATUS "Adding custom command: ${MSBUILD_EXECUTABLE} /t:Build /p:Configuration=${DEFAULT_CS_CONFIG} ${extra_flags} ${csproj_file}")
     ADD_CUSTOM_COMMAND (
       TARGET ${target}
-      COMMAND ${CMAKE_VS_DEVENV_COMMAND} /Build Release ${extra_flags} ${csproj_file}
-      COMMENT "Building ${target}: ${CMAKE_VS_DEVENV_COMMAND} /Build Release ${extra_flags} ${csproj_file}")
-  ELSEIF(MSBUILD_EXECUTABLE)
-    #MESSAGE(STATUS "Adding custom command: ${MSBUILD_EXECUTABLE} /t:Build /p:Configuration=Release ${extra_flags} ${csproj_file}")
-    ADD_CUSTOM_COMMAND (
-      TARGET ${target}
-      COMMAND ${MSBUILD_EXECUTABLE} /t:Build /p:Configuration=Release ${extra_flags} ${csproj_file}
-      COMMENT "Building ${target}: ${MSBUILD_EXECUTABLE} /t:Build /p:Configuration=Release ${extra_flags} ${csproj_file}")
+      COMMAND ${MAC_FRESH_SHELL_PREFIX} ${MSBUILD_EXECUTABLE} /t:Build /p:Configuration=${DEFAULT_CS_CONFIG} ${extra_flags} ${csproj_file}
+      COMMENT "Building ${target} with ${MSBUILD_EXECUTABLE}")
   ELSEIF (DOTNET_EXECUTABLE)
     ADD_CUSTOM_COMMAND (
       TARGET ${target}
-      COMMAND ${DOTNET_EXECUTABLE} build ${csproj_file}
-      COMMENT "Building ${target}: ${DOTNET_EXECUTABLE} build ${csproj_file}")
+      COMMAND ${MAC_FRESH_SHELL_PREFIX} "${DOTNET_EXECUTABLE}" build -c ${DEFAULT_CS_CONFIG} "${csproj_file}"
+      COMMENT "Building ${target} with ${DOTNET_EXECUTABLE}")
   ELSE()
     MESSAGE(FATAL_ERROR "Neither Visual Studio, msbuild nor dotnot is found!")
   ENDIF()
 ENDMACRO()
 
+MACRO(BUILD_CSPROJ_IN_SOLUTION target solution_file project_name extra_flags)
+  IF(APPLE)
+    SET(MAC_FRESH_SHELL_PREFIX env -i zsh)
+  ENDIF()
+  ADD_CUSTOM_TARGET (${target} ${ARGV4})
+  #  IF (WIN32 AND MSVC AND NOT ("${CMAKE_VS_DEVENV_COMMAND}" STREQUAL ""))
+  #    ADD_CUSTOM_COMMAND (
+  #      TARGET ${target}
+  #      COMMAND ${CMAKE_VS_DEVENV_COMMAND} /Build ${DEFAULT_CS_CONFIG} ${extra_flags} ${solution_file} /project ${project_name}
+  #      COMMENT "Building ${target} with ${CMAKE_VS_DEVENV_COMMAND}")
+  #  ELSEIF(VSTOOL_EXECUTABLE)      
+  #    IF ("${project_name}" STREQUAL "")
+  #    ADD_CUSTOM_COMMAND (
+  #      TARGET ${target}
+  #      COMMAND ${MAC_FRESH_SHELL_PREFIX} ${MSBUILD_EXECUTABLE} -t:restore ${solution_file}
+  #      COMMAND "${VSTOOL_EXECUTABLE}" build -t:Build -c:"${DEFAULT_CS_CONFIG}" ${extra_flags}${solution_file}
+  #      COMMENT "Building ${target}")
+  #    ELSE()
+  #    ADD_CUSTOM_COMMAND (
+  #      TARGET ${target}
+  #      COMMAND ${MAC_FRESH_SHELL_PREFIX} ${MSBUILD_EXECUTABLE} -t:restore ${solution_file}
+  #      COMMAND "${VSTOOL_EXECUTABLE}" build -t:Build -c:"${DEFAULT_CS_CONFIG}" ${extra_flags}${solution_file} -p:${project_name}
+  #      COMMENT "Building ${target}")
+  #    ENDIF()
+  IF(MSBUILD_EXECUTABLE)
+    IF ("${project_name}" STREQUAL "")
+      ADD_CUSTOM_COMMAND (
+	TARGET ${target}
+	COMMAND ${MAC_FRESH_SHELL_PREFIX} ${MSBUILD_EXECUTABLE} -t:restore ${solution_file}
+	COMMAND ${MAC_FRESH_SHELL_PREFIX} ${MSBUILD_EXECUTABLE} /p:Configuration=${DEFAULT_CS_CONFIG} ${extra_flags} ${solution_file}
+	COMMENT "Building ${target} with ${MSBUILD_EXECUTABLE}")
+    ELSE()
+      STRING(REGEX REPLACE "\\." "_" msbuild_target_name ${project_name})
+      #MESSAGE(STATUS ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> msbuild_target_name: ${msbuild_target_name}")
+      ADD_CUSTOM_COMMAND (
+	TARGET ${target}
+	COMMAND ${MAC_FRESH_SHELL_PREFIX} ${MSBUILD_EXECUTABLE} -t:restore ${solution_file}
+	COMMAND ${MAC_FRESH_SHELL_PREFIX} ${MSBUILD_EXECUTABLE} /p:Configuration=${DEFAULT_CS_CONFIG} ${extra_flags} ${solution_file} /target:${msbuild_target_name}
+	COMMENT "Building ${target} with ${MSBUILD_EXECUTABLE}")
+    ENDIF()
+  ELSEIF (DOTNET_EXECUTABLE)
+    IF ("${project_name}" STREQUAL "")
+      ADD_CUSTOM_COMMAND (
+	TARGET ${target}
+	COMMAND ${MAC_FRESH_SHELL_PREFIX} ${DOTNET_EXECUTABLE} msbuild -t:restore ${solution_file}
+	COMMAND ${MAC_FRESH_SHELL_PREFIX} ${DOTNET_EXECUTABLE} msbuild /p:Configuration=${DEFAULT_CS_CONFIG} ${extra_flags} ${solution_file}
+	COMMENT "Building ${target} with ${DOTNET_EXECUTABLE}")
+    ELSE()
+      STRING(REGEX REPLACE "\\." "_" msbuild_target_name ${project_name})
+      #MESSAGE(STATUS ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> msbuild_target_name: ${msbuild_target_name}")
+      ADD_CUSTOM_COMMAND (
+	TARGET ${target}
+	COMMAND ${MAC_FRESH_SHELL_PREFIX} ${DOTNET_EXECUTABLE} msbuild -t:restore ${solution_file}
+	COMMAND ${MAC_FRESH_SHELL_PREFIX} ${DOTNET_EXECUTABLE} msbuild /p:Configuration=${DEFAULT_CS_CONFIG} ${extra_flags} ${solution_file} /target:${msbuild_target_name}
+	COMMENT "Building ${target} with ${DOTNET_EXECUTABLE}")
+    ENDIF()
+  ELSE()
+    MESSAGE(FATAL_ERROR "Neither Visual Studio, msbuild nor dotnot is found!")
+  ENDIF()
+ENDMACRO()
+
+
 MACRO(BUILD_DOTNET_PROJ target csproj_file extra_flags)
   ADD_CUSTOM_TARGET (${target} ${ARGV3})
+  #IF(APPLE)
+  #  SET(MAC_FRESH_SHELL_PREFIX env -i zsh)
+  #ENDIF()
   
   IF (DOTNET_EXECUTABLE)
     ADD_CUSTOM_COMMAND (
       TARGET ${target}
-      COMMAND "${DOTNET_EXECUTABLE}" build "${csproj_file}"
-      COMMENT "Building ${target}")
-    #MESSAGE(STATUS " ==> ${target} Build command: ${DOTNET_EXECUTABLE} build ${csproj_file}" )
+      COMMAND  ${MAC_FRESH_SHELL_PREFIX} "${DOTNET_EXECUTABLE}" build -c ${DEFAULT_CS_CONFIG} ${extra_flags} "${csproj_file}"
+      COMMENT "Building ${target} with ${DOTNET_EXECUTABLE}")
   ELSE()
     MESSAGE(FATAL_ERROR "DOTNET_EXECUTABLE not found!")
   ENDIF()
@@ -274,7 +344,7 @@ MACRO(COMPILE_CS target target_type source)
 	-r:\"${NETFX_CORE_REFERENCE_FOLDER}System.Threading.dll\" 
 	-r:\"${NETFX_CORE_REFERENCE_FOLDER}System.Threading.Tasks.dll\"
 	-r:\"${NETFX_CORE_REFERENCE_FOLDER}System.Threading.Tasks.Parallel.dll\" 
-        -r:\"${NETFX_CORE_REFERENCE_FOLDER}System.Threading.Timer.dll\" 
+	-r:\"${NETFX_CORE_REFERENCE_FOLDER}System.Threading.Timer.dll\" 
 	-r:\"${NETFX_CORE_REFERENCE_FOLDER}System.Windows.dll\" 
 	-r:\"${NETFX_CORE_REFERENCE_FOLDER}System.Xml.dll\" 
 	-r:\"${NETFX_CORE_REFERENCE_FOLDER}System.Xml.Linq.dll\" 

@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 using System;
 using System.CodeDom;
@@ -28,7 +28,6 @@ namespace Emgu.CV
         {
             return _libraryLoaded;
         }
-
 
         /// <summary>
         /// string marshaling type
@@ -123,10 +122,10 @@ namespace Emgu.CV
                 subfolder = IntPtr.Size == 8 ? "x86_64" : "x86";
 #elif UNITY_STANDALONE_WIN
 #else
-            if (Platform.OperationSystem == Emgu.Util.TypeEnum.OS.Windows)
-            {
-               subfolder = IntPtr.Size == 8 ? "x64" : "x86";
-            }
+                if (Platform.OperationSystem == Emgu.Util.Platform.OS.Windows)
+                {
+                    subfolder = IntPtr.Size == 8 ? "x64" : "x86";
+                }
 #endif
 
                 /*
@@ -134,9 +133,7 @@ namespace Emgu.CV
                 {
                    subfolder = "..";
                 }*/
-#if NETSTANDARD1_4
-             loadDirectory = new DirectoryInfo(".").FullName;
-#else
+
                 System.Reflection.Assembly asm = typeof(CvInvoke).Assembly; //System.Reflection.Assembly.GetExecutingAssembly();
                 if ((String.IsNullOrEmpty(asm.Location) || !File.Exists(asm.Location)))
                 {
@@ -149,42 +146,41 @@ namespace Emgu.CV
                         //we may be running in a debugger visualizer under a unit test in this case
                         String visualStudioDir = AppDomain.CurrentDomain.BaseDirectory;
                         DirectoryInfo visualStudioDirInfo = new DirectoryInfo(visualStudioDir);
-                        String debuggerVisualzerPath =
-                            Path.Combine(Path.Combine(Path.Combine(
-                                visualStudioDirInfo.Parent.FullName, "Packages"), "Debugger"), "Visualizers");
+                        String debuggerVisualizerPath =
+                            Path.Combine(visualStudioDirInfo.Parent.FullName, "Packages", "Debugger", "Visualizers");
 
-                        if (Directory.Exists(debuggerVisualzerPath))
-                            loadDirectory = debuggerVisualzerPath;
+                        if (Directory.Exists(debuggerVisualizerPath))
+                            loadDirectory = debuggerVisualizerPath;
                         else
                             loadDirectory = String.Empty;
                         /*
-                                       loadDirectory = Path.GetDirectoryName(new UriBuilder(System.Reflection.Assembly.GetExecutingAssembly().CodeBase).Path);
+                           loadDirectory = Path.GetDirectoryName(new UriBuilder(System.Reflection.Assembly.GetExecutingAssembly().CodeBase).Path);
 
-                                       DirectoryInfo dir = new DirectoryInfo(loadDirectory);
-                                       string subdir = String.Join(";", Array.ConvertAll(dir.GetDirectories(), d => d.ToString()));
+                           DirectoryInfo dir = new DirectoryInfo(loadDirectory);
+                           string subdir = String.Join(";", Array.ConvertAll(dir.GetDirectories(), d => d.ToString()));
 
-                                       throw new Exception(String.Format(
-                                          "The Emgu.CV.dll assembly path (typeof (CvInvoke).Assembly.Location) '{0}' is invalid." +
-                                          Environment.NewLine
-                                          + " Other possible path (System.Reflection.Assembly.GetExecutingAssembly().Location): '{1}';" +
-                                          Environment.NewLine
-                                          + " Other possible path (Path.GetDirectoryName(new UriBuilder(System.Reflection.Assembly.GetExecutingAssembly().CodeBase).Path): '{2}';" +
-                                          Environment.NewLine
-                                          + " Other possible path (System.Reflection.Assembly.GetExecutingAssembly().CodeBase): '{3};'" +
-                                          Environment.NewLine
-                                          + " Other possible path (typeof(CvInvoke).Assembly.CodeBase): '{4}'" +
-                                          Environment.NewLine
-                                          + " Other possible path (AppDomain.CurrentDomain.BaseDirectory): '{5}'" +
-                                          Environment.NewLine
-                                          + " subfolder name: '{6}'",
-                                          asm.Location,
-                                          Path.GetDirectoryName(new UriBuilder(System.Reflection.Assembly.GetExecutingAssembly().CodeBase).Path),
-                                          loadDirectory + ": subdir '" + subdir +"'",
-                                          System.Reflection.Assembly.GetExecutingAssembly().CodeBase,
-                                          typeof(CvInvoke).Assembly.Location,
-                                          AppDomain.CurrentDomain.BaseDirectory,
-                                          subfolder
-                                          ));
+                           throw new Exception(String.Format(
+                              "The Emgu.CV.dll assembly path (typeof (CvInvoke).Assembly.Location) '{0}' is invalid." +
+                              Environment.NewLine
+                              + " Other possible path (System.Reflection.Assembly.GetExecutingAssembly().Location): '{1}';" +
+                              Environment.NewLine
+                              + " Other possible path (Path.GetDirectoryName(new UriBuilder(System.Reflection.Assembly.GetExecutingAssembly().CodeBase).Path): '{2}';" +
+                              Environment.NewLine
+                              + " Other possible path (System.Reflection.Assembly.GetExecutingAssembly().CodeBase): '{3};'" +
+                              Environment.NewLine
+                              + " Other possible path (typeof(CvInvoke).Assembly.CodeBase): '{4}'" +
+                              Environment.NewLine
+                              + " Other possible path (AppDomain.CurrentDomain.BaseDirectory): '{5}'" +
+                              Environment.NewLine
+                              + " subfolder name: '{6}'",
+                              asm.Location,
+                              Path.GetDirectoryName(new UriBuilder(System.Reflection.Assembly.GetExecutingAssembly().CodeBase).Path),
+                              loadDirectory + ": subdir '" + subdir +"'",
+                              System.Reflection.Assembly.GetExecutingAssembly().CodeBase,
+                              typeof(CvInvoke).Assembly.Location,
+                              AppDomain.CurrentDomain.BaseDirectory,
+                              subfolder
+                              ));
                          */
                     }
                 }
@@ -198,7 +194,7 @@ namespace Emgu.CV
                 DirectoryInfo directory = file.Directory;
                 loadDirectory = directory.FullName;
                 */
-#endif
+
                 if (!String.IsNullOrEmpty(subfolder))
                 {
                     var temp = Path.Combine(loadDirectory, subfolder);
@@ -235,28 +231,28 @@ namespace Emgu.CV
                 }
             }
             
-#elif __ANDROID__ || UNITY_ANDROID || NETSTANDARD1_4
+#elif UNITY_ANDROID
 #else
-            if (!Directory.Exists(loadDirectory))
-            {
-               //try to find an alternative loadDirectory path
-               //The following code should handle finding the asp.NET BIN folder 
-               String altLoadDirectory = Path.GetDirectoryName(asm.CodeBase);
-               if (!String.IsNullOrEmpty(altLoadDirectory) && altLoadDirectory.StartsWith(@"file:\"))
-                  altLoadDirectory = altLoadDirectory.Substring(6);
+                if (!Directory.Exists(loadDirectory))
+                {
+                    //try to find an alternative loadDirectory path
+                    //The following code should handle finding the asp.NET BIN folder 
+                    String altLoadDirectory = Path.GetDirectoryName(asm.CodeBase);
+                    if (!String.IsNullOrEmpty(altLoadDirectory) && altLoadDirectory.StartsWith(@"file:\"))
+                        altLoadDirectory = altLoadDirectory.Substring(6);
 
-               if (!String.IsNullOrEmpty(subfolder))
-                  altLoadDirectory = Path.Combine(altLoadDirectory, subfolder);
+                    if (!String.IsNullOrEmpty(subfolder))
+                        altLoadDirectory = Path.Combine(altLoadDirectory, subfolder);
 
-               if (!Directory.Exists(altLoadDirectory))
-               {
-                  if (String.IsNullOrEmpty(asm.Location) || !File.Exists(asm.Location))
-                  {
-                       Debug.WriteLine(String.Format("asm.Location is invalid: '{0}'", asm.Location));
-                       return false;
-                  }
-                  FileInfo file = new FileInfo(asm.Location);
-                  DirectoryInfo directory = file.Directory;
+                    if (!Directory.Exists(altLoadDirectory))
+                    {
+                        if (String.IsNullOrEmpty(asm.Location) || !File.Exists(asm.Location))
+                        {
+                            Debug.WriteLine(String.Format("asm.Location is invalid: '{0}'", asm.Location));
+                            return false;
+                        }
+                        FileInfo file = new FileInfo(asm.Location);
+                        DirectoryInfo directory = file.Directory;
 #if UNITY_EDITOR_WIN
               if (directory.Parent != null && directory.Parent.Parent != null)
                   {
@@ -296,21 +292,31 @@ namespace Emgu.CV
                   }
                   else       
 #endif
-                  {
-                     Debug.WriteLine("No suitable directory found to load unmanaged modules");
-                     return false;
-                  }
-               }
-               else
-                  loadDirectory = altLoadDirectory;
-            }
+                        {
+                            Debug.WriteLine("No suitable directory found to load unmanaged modules");
+                            return false;
+                        }
+                    }
+                    else
+                        loadDirectory = altLoadDirectory;
+                }
 #endif
             }
-#if !(NETSTANDARD1_4)
+
             String oldDir = Environment.CurrentDirectory;
             if (!String.IsNullOrEmpty(loadDirectory) && Directory.Exists(loadDirectory))
+            {
                 Environment.CurrentDirectory = loadDirectory;
-#endif
+                if (Emgu.Util.Platform.OperationSystem == Emgu.Util.Platform.OS.Windows)
+                {
+                    bool setDllDirectorySuccess = Emgu.Util.Toolbox.SetDllDirectory(loadDirectory);
+                    if (!setDllDirectorySuccess)
+                    {
+                        System.Diagnostics.Debug.WriteLine(String.Format("Failed to set dll directory: {0}", loadDirectory));
+                    }
+                }
+            }
+            
 #endif
 
             System.Diagnostics.Debug.WriteLine(String.Format("Loading open cv binary from {0}", loadDirectory));
@@ -333,33 +339,21 @@ namespace Emgu.CV
 
                 String fullPath = Path.Combine(prefix, mName);
 
-#if NETFX_CORE
-            if (loadableFiles.Exists(sf => sf.Equals(fullPath)))
-            {
-               IntPtr handle = Toolbox.LoadLibrary(fullPath);
-               success &= (!IntPtr.Zero.Equals(handle));
-            }
-            else
-            {
-               success = false;
-            }
-#else
                 //Use absolute path for Windows Desktop
                 fullPath = Path.Combine(loadDirectory, fullPath);
 
                 bool fileExist = File.Exists(fullPath);
                 if (!fileExist)
-                    System.Diagnostics.Debug.WriteLine(String.Format("File {0} do not exist.", fullPath));
+                    System.Diagnostics.Trace.WriteLine(String.Format("File {0} do not exist.", fullPath));
                 bool fileExistAndLoaded = fileExist && !IntPtr.Zero.Equals(Toolbox.LoadLibrary(fullPath));
                 if (fileExist && (!fileExistAndLoaded))
-                    System.Diagnostics.Debug.WriteLine(String.Format("File {0} cannot be loaded.", fullPath));
+                    System.Diagnostics.Trace.WriteLine(String.Format("File {0} cannot be loaded.", fullPath));
                 success &= fileExistAndLoaded;
-#endif
             }
 
-#if !(NETFX_CORE || NETSTANDARD1_4)
+
             Environment.CurrentDirectory = oldDir;
-#endif
+
             return success;
         }
 
@@ -372,62 +366,81 @@ namespace Emgu.CV
 #if UNITY_EDITOR_WIN
             return "{0}.dll";
 #elif UNITY_EDITOR_OSX
-         return "lib{0}.dylib";
+            return "lib{0}.dylib";
 #else
-         String formatString = "{0}";
-         if (Emgu.Util.Platform.OperationSystem == Emgu.Util.TypeEnum.OS.Windows 
-            || Emgu.Util.Platform.OperationSystem == Emgu.Util.TypeEnum.OS.WindowsPhone)
-            formatString = "{0}.dll";
-         else if (Emgu.Util.Platform.OperationSystem == Emgu.Util.TypeEnum.OS.Linux)
-            formatString = "lib{0}.so";
-         else if (Emgu.Util.Platform.OperationSystem == Emgu.Util.TypeEnum.OS.MacOS)
-            formatString = "lib{0}.dylib";
-         return formatString;
+            String formatString = "{0}";
+            if (Emgu.Util.Platform.OperationSystem == Emgu.Util.Platform.OS.Windows)
+                formatString = "{0}.dll";
+            else if (Emgu.Util.Platform.OperationSystem == Emgu.Util.Platform.OS.Linux)
+                formatString = "lib{0}.so";
+            else if (Emgu.Util.Platform.OperationSystem == Emgu.Util.Platform.OS.MacOS)
+                formatString = "lib{0}.dylib";
+            return formatString;
 #endif
         }
 
         /// <summary>
         /// Attempts to load opencv modules from the specific location
         /// </summary>
-        /// <param name="modules">The names of opencv modules. e.g. "opencv_cxcore.dll" on windows.</param>
+        /// <param name="modules">The names of opencv modules. e.g. "opencv_core.dll" on windows.</param>
         /// <returns>True if all the modules has been loaded successfully</returns>
         public static bool DefaultLoadUnmanagedModules(String[] modules)
         {
             bool libraryLoaded = true;
-#if __ANDROID__
-         foreach (String module in modules)
-         {
-            try
+
+#if (UNITY_ANDROID && !UNITY_EDITOR)
+            UnityEngine.AndroidJavaObject jo = new UnityEngine.AndroidJavaObject("java.lang.System");
+            foreach (String module in modules)
             {
-               Console.WriteLine(string.Format("Trying to load {0}.", module));
-               Java.Lang.JavaSystem.LoadLibrary(module);
-               Console.WriteLine(string.Format("Loaded {0}.", module));
+                try
+                {
+                   Console.WriteLine(string.Format("Trying to load {0}.", module));
+                   jo.CallStatic("loadLibrary", module); 
+                   Console.WriteLine(string.Format("Loaded {0}.", module));
+                }
+                catch (Exception e)
+                {
+                   libraryLoaded = false;
+                   Console.WriteLine(String.Format("Failed to load {0}: {1}", module, e.Message));
+                }
             }
-            catch (Exception e)
-            {
-               libraryLoaded = false;
-               Console.WriteLine(String.Format("Failed to load {0}: {1}", module, e.Message));
-            }
-         }
-#elif (UNITY_ANDROID && !UNITY_EDITOR)
-         UnityEngine.AndroidJavaObject jo = new UnityEngine.AndroidJavaObject("java.lang.System");
-         foreach (String module in modules)
-         {
-            try
-            {
-               Console.WriteLine(string.Format("Trying to load {0}.", module));
-               jo.CallStatic("loadLibrary", module); 
-               Console.WriteLine(string.Format("Loaded {0}.", module));
-            }
-            catch (Exception e)
-            {
-               libraryLoaded = false;
-               Console.WriteLine(String.Format("Failed to load {0}: {1}", module, e.Message));
-            }
-         }
-#elif __IOS__ || UNITY_IOS || NETFX_CORE
+#elif UNITY_IOS
 #else
-            if (Emgu.Util.Platform.OperationSystem != Emgu.Util.TypeEnum.OS.MacOS)
+            if (Emgu.Util.Platform.OperationSystem == Platform.OS.IOS)
+                return libraryLoaded;
+            else if (Emgu.Util.Platform.OperationSystem == Platform.OS.Android)
+            {
+                System.Reflection.Assembly monoAndroidAssembly = Emgu.Util.Toolbox.FindAssembly("Mono.Android.dll");
+
+                //Running on Xamarin Android
+                Type javaSystemType = monoAndroidAssembly.GetType("Java.Lang.JavaSystem");
+                if (javaSystemType != null)
+                {
+                    System.Reflection.MethodInfo loadLibraryMethodInfo = javaSystemType.GetMethod("LoadLibrary");
+                    if (loadLibraryMethodInfo != null)
+                    {
+                        foreach (String module in modules)
+                        {
+                            if (module.StartsWith("opencv_videoio_ffmpeg"))
+                                continue; //skip the ffmpeg modules.
+                            try
+                            {
+                                System.Diagnostics.Trace.WriteLine(string.Format("Trying to load {0} ({1} bit).", module,
+                                    IntPtr.Size * 8));
+                                loadLibraryMethodInfo.Invoke(null, new object[] { module });
+                                //Java.Lang.JavaSystem.LoadLibrary(module);
+                                System.Diagnostics.Trace.WriteLine(string.Format("Loaded {0}.", module));
+                            }
+                            catch (Exception e)
+                            {
+                                libraryLoaded = false;
+                                System.Diagnostics.Trace.WriteLine(String.Format("Failed to load {0}: {1}", module, e.Message));
+                            }
+                        }
+                        return libraryLoaded;
+                    }
+                }
+            } else if (Emgu.Util.Platform.OperationSystem != Emgu.Util.Platform.OS.MacOS)
             {
                 String formatString = GetModuleFormatString();
                 for (int i = 0; i < modules.Length; ++i)
@@ -444,15 +457,38 @@ namespace Emgu.CV
         /// </summary>
         static CvInvoke()
         {
+            if (Emgu.Util.Platform.OperationSystem == Emgu.Util.Platform.OS.IOS)
+            {
+                /*
+                Assembly assembly = Assembly.GetExecutingAssembly();
+
+                System.Runtime.InteropServices.DllImportResolver resolver =
+                    (string libraryName, Assembly asm, DllImportSearchPath? dllImportSearchPath) =>
+                    {
+                        if (dllImportSearchPath != DllImportSearchPath.System32)
+                        {
+                            Console.WriteLine($"Unexpected dllImportSearchPath: {dllImportSearchPath.ToString()}");
+                            throw new ArgumentException();
+                        }
+
+                        return System.Runtime.InteropServices.NativeLibrary.Load("ResolveLib", asm, null);
+                    };
+                    */
+                return;
+            }
+
             List<String> modules = CvInvoke.OpenCVModuleList;
             modules.RemoveAll(String.IsNullOrEmpty);
 
             _libraryLoaded = DefaultLoadUnmanagedModules(modules.ToArray());
 
-#if !UNITY_IOS
-            //Use the custom error handler
-            RedirectError(CvErrorHandlerThrowException, IntPtr.Zero, IntPtr.Zero);
-#endif
+//#if !UNITY_IOS
+            if (Emgu.Util.Platform.OperationSystem != Emgu.Util.Platform.OS.IOS)
+            {
+                //Use the custom error handler
+                RedirectError(CvErrorHandlerThrowException, IntPtr.Zero, IntPtr.Zero);
+            }
+//#endif
         }
 
         #region CV MACROS
@@ -574,7 +610,7 @@ namespace Emgu.CV
             sane &= (sizes.CvSize == Toolbox.SizeOf<System.Drawing.Size>());
             sane &= (sizes.CvSize2D32f == Toolbox.SizeOf<System.Drawing.SizeF>());
             sane &= (sizes.CvTermCriteria == Toolbox.SizeOf<MCvTermCriteria>());
-            sane &= 2 * Toolbox.SizeOf<int>() == Toolbox.SizeOf<Range>();
+            sane &= 2 * Toolbox.SizeOf<int>() == Toolbox.SizeOf<Emgu.CV.Structure.Range>();
             return sane;
         }
     }

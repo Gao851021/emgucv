@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.
 //
 //----------------------------------------------------------------------------
 
@@ -8,12 +8,60 @@
 #ifndef EMGU_CUDAOPTFLOW_C_H
 #define EMGU_CUDAOPTFLOW_C_H
 
-//#include "opencv2/cuda.hpp"
+#include "opencv2/opencv_modules.hpp"
+#include "opencv2/core/core_c.h"
+
+#ifdef HAVE_OPENCV_CUDAOPTFLOW
 #include "opencv2/cudaoptflow.hpp"
 #include "opencv2/core/cuda.hpp"
 #include "opencv2/core/types_c.h"
-#include "opencv2/core/core_c.h"
 #include "emgu_c.h"
+#else
+static inline CV_NORETURN void throw_no_cudaoptflow() { CV_Error(cv::Error::StsBadFunc, "The library is compiled without CUDA Optflow support"); }
+
+namespace cv
+{
+	namespace cuda
+	{
+		class DenseOpticalFlow
+		{
+		};
+
+		class SparseOpticalFlow
+		{
+		};
+
+		class BroxOpticalFlow
+		{
+		};
+
+		class DensePyrLKOpticalFlow
+		{
+		};
+
+		class SparsePyrLKOpticalFlow
+		{
+		};
+
+		class FarnebackOpticalFlow
+		{
+		};
+
+		class OpticalFlowDual_TVL1
+		{
+		};
+
+		class NvidiaOpticalFlow_1_0
+		{
+		};
+
+		class NvidiaHWOpticalFlow
+		{
+		};
+	}
+}
+
+#endif
 
 //----------------------------------------------------------------------------
 //
@@ -127,4 +175,44 @@ CVAPI(void) cudaOpticalFlowDualTvl1Release(cv::Ptr<cv::cuda::OpticalFlowDual_TVL
 //----------------------------------------------------------------------------
 CVAPI(void) cudaCreateOpticalFlowNeedleMap(const cv::cuda::GpuMat* u, const cv::cuda::GpuMat* v, cv::cuda::GpuMat* vertex, cv::cuda::GpuMat* colors);
 */
+
+//----------------------------------------------------------------------------
+//
+//  NvidiaOpticalFlow_1_0
+//
+//----------------------------------------------------------------------------
+CVAPI(cv::cuda::NvidiaOpticalFlow_1_0*) cudaNvidiaOpticalFlow_1_0_Create(
+	int width,
+	int height,
+	int perfPreset,
+	bool enableTemporalHints,
+	bool enableExternalHints,
+	bool enableCostBuffer,
+	int gpuId,
+	cv::cuda::NvidiaHWOpticalFlow** nHWOpticalFlow,
+	cv::Algorithm** algorithm,
+	cv::Ptr<cv::cuda::NvidiaOpticalFlow_1_0>** sharedPtr);
+
+CVAPI(void) cudaNvidiaOpticalFlow_1_0_UpSampler(
+	cv::cuda::NvidiaOpticalFlow_1_0* nFlow,
+	cv::_InputArray* flow, 
+	int width, 
+	int height,
+	int gridSize, 
+	cv::_InputOutputArray* upsampledFlow);
+
+CVAPI(void) cudaNvidiaOpticalFlowCalc(
+	cv::cuda::NvidiaHWOpticalFlow* nHWOpticalFlow,
+	cv::_InputArray* inputImage,
+	cv::_InputArray* referenceImage,
+	cv::_InputOutputArray* flow,
+	cv::cuda::Stream* stream,
+	cv::_InputArray* hint,
+	cv::_OutputArray* cost);
+
+CVAPI(void) cudaNvidiaOpticalFlowCollectGarbage(cv::cuda::NvidiaHWOpticalFlow* nHWOpticalFlow);
+
+CVAPI(int) cudaNvidiaOpticalFlowGetGridSize(cv::cuda::NvidiaHWOpticalFlow* nHWOpticalFlow);
+
+CVAPI(void) cudaNvidiaOpticalFlow_1_0_Release(cv::Ptr<cv::cuda::NvidiaOpticalFlow_1_0>** flow);
 #endif

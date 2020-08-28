@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
 using System;
@@ -13,6 +13,7 @@ namespace HelloWorld
     {
         static void Main(string[] args)
         {
+            CvInvoke.CheckLibraryLoaded();
             String win1 = "Test Window"; //The name of the window
             CvInvoke.NamedWindow(win1); //Create the window using the specific name
 
@@ -31,7 +32,7 @@ namespace HelloWorld
 
             CvInvoke.Imshow(win1, img); //Show the image
             CvInvoke.WaitKey(0);  //Wait for the key pressing event
-            CvInvoke.DestroyWindow(win1); //Destroy the window if key is pressed
+            CvInvoke.DestroyAllWindows(); //Destroy all windows if key is pressed
         }
     }
 }

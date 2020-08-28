@@ -1,5 +1,5 @@
 ﻿//----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.       
 //----------------------------------------------------------------------------
 
 using System;
@@ -13,16 +13,11 @@ using Emgu.CV.Util;
 using Emgu.Util;
 using System.IO;
 
-#if __ANDROID__
-using Bitmap = Android.Graphics.Bitmap;
-#elif __IOS__
+#if __UNIFIED__
 using CoreGraphics;
-using UIKit;
-#elif __UNIFIED__
-using CoreGraphics;
-#elif NETFX_CORE || NETSTANDARD1_4 || UNITY_ANDROID || UNITY_IOS || UNITY_STANDALONE || UNITY_METRO || UNITY_EDITOR
-#else
-using System.Drawing.Imaging;
+#elif NETSTANDARD || UNITY_ANDROID || UNITY_IOS || UNITY_STANDALONE || UNITY_METRO || UNITY_EDITOR
+//#else
+//using System.Drawing.Imaging;
 #endif
 
 namespace Emgu.CV
@@ -30,18 +25,11 @@ namespace Emgu.CV
     /// <summary>
     /// The equivalent of cv::Mat
     /// </summary>
-#if !(NETFX_CORE || NETSTANDARD1_4)
     [Serializable]
     [DebuggerTypeProxy(typeof(Mat.DebuggerProxy))]
-#endif
-    public partial class Mat : MatDataAllocator, IEquatable<Mat>, IInputOutputArray
-#if !(NETFX_CORE || NETSTANDARD1_4)
-, ISerializable
-#endif
+    public partial class Mat : UnmanagedObject, IEquatable<Mat>, IInputOutputArray, ISerializable
     {
-
-#if !(NETFX_CORE || NETSTANDARD1_4)
-        #region Implement ISerializable interface
+#region Implement ISerializable interface
         /// <summary>
         /// Constructor used to deserialize runtime serialized object
         /// </summary>
@@ -82,8 +70,7 @@ namespace Emgu.CV
             info.AddValue("Bytes", Bytes);
         }
 
-        #endregion
-#endif
+#endregion
 
         /// <summary>
         /// Gets or sets the data as byte array.
@@ -242,7 +229,7 @@ namespace Emgu.CV
         public Mat(String fileName, CvEnum.ImreadModes loadType = ImreadModes.Color)
            : this(MatInvoke.cveMatCreate(), true, false)
         {
-#if !(NETFX_CORE || NETSTANDARD1_4)
+
             FileInfo fi = new FileInfo(fileName);
             if (!fi.Exists)
             {
@@ -250,20 +237,17 @@ namespace Emgu.CV
             }
 
             String extension = fi.Extension.ToLower();
-#if __UNIFIED__
-         //Open CV's libpng doesn't seem to be able to handle png in iOS
-         //Use CGImage to load png
-         if (extension.Equals(".png"))
-         {
-            using (CGDataProvider provider = new CGDataProvider(fileName))
-            using (CGImage tmp = CGImage.FromPNG(provider, null, false, CGColorRenderingIntent.Default))
+
+            //Open CV's libpng doesn't seem to be able to handle png in iOS
+            //Use CGImage to load png
+            if (extension.Equals(".png") &&
+                (Emgu.Util.Platform.OperationSystem == Emgu.Util.Platform.OS.IOS ||
+                 Emgu.Util.Platform.OperationSystem == Emgu.Util.Platform.OS.MacOS))
             {
-               CvInvoke.ConvertCGImageToArray(tmp, this, loadType);
+                bool success = Emgu.CV.NativeMatFileIO.ReadFileToMat(fileName, this, loadType);
+                if (success)
+                    return;
             }
-            return;
-         }
-#endif
-#endif
 
             using (CvString s = new CvString(fileName))
             {
@@ -271,7 +255,6 @@ namespace Emgu.CV
 
                 if (this.IsEmpty) //failed to load in the first attempt
                 {
-#if !(NETFX_CORE || NETSTANDARD1_4 || UNITY_ANDROID || UNITY_IOS || UNITY_STANDALONE || UNITY_METRO || UNITY_EDITOR)
                     //try again to see if this is a Unicode issue in the file name. 
                     //Work around for Open CV ticket:
                     //https://github.com/Itseez/opencv/issues/4292
@@ -282,17 +265,11 @@ namespace Emgu.CV
 
                     if (IsEmpty)
                     {
-#if __IOS__
-                      //try again to load with UIImage
-                      using (UIImage tmp = UIImage.FromFile(fileName))
-                      {
-                         CvInvoke.ConvertCGImageToArray(tmp.CGImage, this);
-                      }
-#else
-                        throw new ArgumentException(String.Format("Unable to decode file: {0}", fileName));
-#endif
+                        //try again to load with Native implementation
+                        bool success = Emgu.CV.NativeMatFileIO.ReadFileToMat(fileName, this, loadType);
+                        if (!success)
+                            throw new ArgumentException(String.Format("Unable to decode file: {0}", fileName));
                     }
-#endif
                 }
             }
         }
@@ -313,7 +290,7 @@ namespace Emgu.CV
         /// <param name="mat">The mat where the new Mat header will share data from</param>
         /// <param name="rowRange">The region of interest</param>
         /// <param name="colRange">The region of interest</param>
-        public Mat(Mat mat, Range rowRange, Range colRange)
+        public Mat(Mat mat, Emgu.CV.Structure.Range rowRange, Emgu.CV.Structure.Range colRange)
            : this(MatInvoke.cveMatCreateFromRange(mat.Ptr, ref rowRange, ref colRange), true, true)
         {
         }
@@ -681,7 +658,7 @@ namespace Emgu.CV
             if (_needDispose && _ptr != IntPtr.Zero)
                 MatInvoke.cveMatRelease(ref _ptr);
 
-            base.DisposeObject();
+            //base.DisposeObject();
 
         }
 
@@ -815,57 +792,6 @@ namespace Emgu.CV
             }
         }
 
-#if !(NETFX_CORE || NETSTANDARD1_4 || UNITY_ANDROID || UNITY_IOS || UNITY_STANDALONE || UNITY_METRO || UNITY_EDITOR || __ANDROID__ || __UNIFIED__)
-        /// <summary>
-        /// The Get property provide a more efficient way to convert gray scale Mat of Byte, 3 channel Mat of Byte (assuming BGR color space) or 4 channel Mat of Byte (assuming Bgra color space) into Bitmap
-        /// such that the image data is <b>shared</b> with Bitmap. 
-        /// If you change the pixel value on the Bitmap, you change the pixel values on the Image object as well!
-        /// For other types of image this property has the same effect as ToBitmap()
-        /// <b>Take extra caution not to use the Bitmap after the Mat object is disposed</b>
-        /// The Set property convert the bitmap to this Image type.
-        /// </summary>
-        public Bitmap Bitmap
-        {
-            get
-            {
-                if (Dims > 3)
-                    return null;
-                int channels = NumberOfChannels;
-                Size s = this.Size;
-                Type colorType;
-                switch (channels)
-                {
-                    case 1:
-                        colorType = typeof(Gray);
-
-                        if (s.Equals(Size.Empty))
-                            return null;
-                        if ((s.Width | 3) != 0) //handle the special case where width is not a multiple of 4
-                        {
-                            Bitmap bmp = new Bitmap(s.Width, s.Height, PixelFormat.Format8bppIndexed);
-                            bmp.Palette = CvToolbox.GrayscalePalette;
-                            BitmapData bitmapData = bmp.LockBits(new Rectangle(Point.Empty, s), ImageLockMode.WriteOnly, PixelFormat.Format8bppIndexed);
-                            using (Mat m = new Mat(s.Height, s.Width, DepthType.Cv8U, 1, bitmapData.Scan0, bitmapData.Stride))
-                            {
-                                CopyTo(m);
-                            }
-                            bmp.UnlockBits(bitmapData);
-                            return bmp;
-                        }
-                        break;
-                    case 3:
-                        colorType = typeof(Bgr);
-                        break;
-                    case 4:
-                        colorType = typeof(Bgra);
-                        break;
-                    default:
-                        throw new Exception("Unknown color type");
-                }
-                return CvInvoke.RawDataToBitmap(DataPointer, this.Step, s, colorType, NumberOfChannels, CvInvoke.GetDepthType(Depth), true);
-            }
-        }
-#endif
 
         internal static DepthType GetDepthTypeFromArray(Array data)
         {
@@ -1076,7 +1002,7 @@ namespace Emgu.CV
         /// <returns>A matrix header for the specified matrix row.</returns>
         public Mat Row(int y)
         {
-            return new Mat(this, new Range(y, y + 1), Range.All);
+            return new Mat(this, new Emgu.CV.Structure.Range(y, y + 1), Emgu.CV.Structure.Range.All);
         }
 
         /// <summary>
@@ -1086,7 +1012,7 @@ namespace Emgu.CV
         /// <returns>A matrix header for the specified matrix column.</returns>
         public Mat Col(int x)
         {
-            return new Mat(this, Range.All, new Range(x, x + 1));
+            return new Mat(this, Emgu.CV.Structure.Range.All, new Emgu.CV.Structure.Range(x, x + 1));
         }
 
         /// <summary>
@@ -1113,59 +1039,11 @@ namespace Emgu.CV
 
             if (e != null)
             {
-#if __UNIFIED__ || NETFX_CORE || NETSTANDARD1_4 || (UNITY_ANDROID || UNITY_IOS || UNITY_STANDALONE || UNITY_METRO)
-            throw e;
-#elif __ANDROID__
-            FileInfo fileInfo = new FileInfo(fileName);
-            using (Bitmap bmp = this.Bitmap)
-            using (FileStream fs = fileInfo.Open(FileMode.Append, FileAccess.Write))
-            {
-               String extension = fileInfo.Extension.ToLower();
-               Debug.Assert(extension.Substring(0, 1).Equals("."));
-               switch (extension)
-               {
-                  case ".jpg":
-                  case ".jpeg":
-                     bmp.Compress(Bitmap.CompressFormat.Jpeg, 90, fs);
-                     break;
-                  case ".png":
-                     bmp.Compress(Bitmap.CompressFormat.Png, 90, fs);
-                     break;
-                  default:
-                     throw new NotImplementedException(String.Format("Saving to {0} format is not supported", extension));
-               }
-            }
-#else
-                //Saving with OpenCV fails
-                //Try to save the image using .NET's Bitmap class
-                String extension = Path.GetExtension(fileName);
-                if (!String.IsNullOrEmpty(extension))
-                    using (Bitmap bmp = Bitmap)
-                    {
-                        switch (extension.ToLower())
-                        {
-                            case ".jpg":
-                            case ".jpeg":
-                                bmp.Save(fileName, ImageFormat.Jpeg);
-                                break;
-                            case ".bmp":
-                                bmp.Save(fileName, ImageFormat.Bmp);
-                                break;
-                            case ".png":
-                                bmp.Save(fileName, ImageFormat.Png);
-                                break;
-                            case ".tiff":
-                            case ".tif":
-                                bmp.Save(fileName, ImageFormat.Tiff);
-                                break;
-                            case ".gif":
-                                bmp.Save(fileName, ImageFormat.Gif);
-                                break;
-                            default:
-                                throw new NotImplementedException(String.Format("Saving to {0} format is not supported", extension));
-                        }
-                    }
-#endif
+                //try to load with Native implementation
+                if (Emgu.CV.NativeMatFileIO.WriteMatToFile(this, fileName))
+                    return;
+
+                throw e;
             }
         }
 
@@ -1266,7 +1144,7 @@ namespace Emgu.CV
             }
         }
 
-        #region Operator overload
+#region Operator overload
 
         /// <summary>
         /// Perform an element wise AND operation on the two mats
@@ -1609,7 +1487,7 @@ namespace Emgu.CV
             }
         }
 
-        #endregion
+#endregion
 
         internal class DebuggerProxy
         {
@@ -1682,7 +1560,7 @@ namespace Emgu.CV
         internal extern static IntPtr cveMatCreateFromRect(IntPtr mat, ref Rectangle roi);
 
         [DllImport(CvInvoke.ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]
-        internal extern static IntPtr cveMatCreateFromRange(IntPtr mat, ref Range rowRange, ref Range colRange);
+        internal extern static IntPtr cveMatCreateFromRange(IntPtr mat, ref Emgu.CV.Structure.Range rowRange, ref Emgu.CV.Structure.Range colRange);
 
         /*
         [DllImport(CvInvoke.ExternLibrary, CallingConvention = CvInvoke.CvCallingConvention)]

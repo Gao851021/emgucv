@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.
 //
 //----------------------------------------------------------------------------
 
@@ -8,9 +8,28 @@
 #ifndef EMGU_DNN_C_H
 #define EMGU_DNN_C_H
 
+#include "opencv2/opencv_modules.hpp"
 #include "opencv2/core/core_c.h"
-#include "opencv2/dnn/dnn.hpp"
 
+#ifdef HAVE_OPENCV_DNN
+#include "opencv2/dnn/dnn.hpp"
+#else
+static inline CV_NORETURN void throw_no_dnn() { CV_Error(cv::Error::StsBadFunc, "The library is compiled without DNN support"); }
+
+namespace cv
+{
+	namespace dnn
+	{
+		class Net
+		{
+		};
+
+		class Layer
+		{
+		};
+	}
+}
+#endif
 
 CVAPI(cv::dnn::Net*) cveReadNetFromDarknet(cv::String* cfgFile, cv::String* darknetModel);
 CVAPI(cv::dnn::Net*) cveReadNetFromDarknet2(const char *bufferCfg, int lenCfg, const char *bufferModel, int lenModel);

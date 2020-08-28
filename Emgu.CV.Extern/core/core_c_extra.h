@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.
+//  Copyright (C) 2004-2020 by EMGU Corporation. All rights reserved.
 //
 //----------------------------------------------------------------------------
 
@@ -8,12 +8,12 @@
 #ifndef EMGU_CORE_C_H
 #define EMGU_CORE_C_H
 
+#include "opencv2/opencv_modules.hpp"
+#include "opencv2/core/core_c.h"
 #include "opencv2/core.hpp"
 #include "opencv2/core/cuda.hpp"
-#include "opencv2/core/core_c.h"
 #include "emgu_c.h"
 #include "opencv2/core/affine.hpp"
-//#include "opencv2/core/precom.hpp"
 
 CVAPI(CvErrorCallback) cveRedirectError(CvErrorCallback error_handler, void* userdata, void** prev_userdata);
 CVAPI(int) cveGetErrMode();
@@ -65,7 +65,7 @@ CVAPI(cv::Scalar*) cveScalarCreate(CvScalar* scalar);
 CVAPI(void) cveScalarRelease(cv::Scalar** scalar);
 
 CVAPI(void) cveMinMaxIdx(cv::_InputArray* src, double* minVal, double* maxVal, int* minIdx, int* maxIdx, cv::_InputArray* mask);
-CVAPI(void) cveMinMaxLoc(cv::_InputArray* src, double* minVal, double* maxVal, CvPoint* minLoc, CvPoint* macLoc, cv::_InputArray *mask);
+CVAPI(void) cveMinMaxLoc(cv::_InputArray* src, double* minVal, double* maxVal, CvPoint* minLoc, CvPoint* macLoc, cv::_InputArray* mask);
 
 CVAPI(void) cveBitwiseAnd(cv::_InputArray* src1, cv::_InputArray* src2, cv::_OutputArray* dst, cv::_InputArray* mask);
 CVAPI(void) cveBitwiseNot(cv::_InputArray* src, cv::_OutputArray* dst, cv::_InputArray* mask);
@@ -102,6 +102,7 @@ CVAPI(double) cveNorm(cv::_InputArray* src1, cv::_InputArray* src2, int normType
 CVAPI(bool) cveCheckRange(cv::_InputArray* arr, bool quiet, CvPoint* index, double minVal, double maxVal);
 CVAPI(void) cvePatchNaNs(cv::_InputOutputArray* a, double val);
 CVAPI(void) cveGemm(cv::_InputArray* src1, cv::_InputArray* src2, double alpha, cv::_InputArray* src3, double beta, cv::_OutputArray* dst, int flags);
+CVAPI(void) cveScaleAdd(cv::_InputArray* src1, double alpha, cv::_InputArray* src2, cv::_OutputArray* dst);
 CVAPI(void) cveAddWeighted(cv::_InputArray* src1, double alpha, cv::_InputArray* src2, double beta, double gamma, cv::_OutputArray* dst, int dtype);
 CVAPI(void) cveConvertScaleAbs(cv::_InputArray* src, cv::_OutputArray* dst, double alpha, double beta);
 CVAPI(void) cveReduce(cv::_InputArray* src, cv::_OutputArray* dst, int dim, int rtype, int dtype);
@@ -147,6 +148,9 @@ CVAPI(double) cveKmeans(cv::_InputArray* data, int k, cv::_InputOutputArray* bes
 
 CVAPI(void) cveHConcat(cv::_InputArray* src1, cv::_InputArray* src2, cv::_OutputArray* dst);
 CVAPI(void) cveVConcat(cv::_InputArray* src1, cv::_InputArray* src2, cv::_OutputArray* dst);
+CVAPI(void) cveHConcat2(cv::_InputArray* src, cv::_OutputArray* dst);
+CVAPI(void) cveVConcat2(cv::_InputArray* src, cv::_OutputArray* dst);
+
 
 CVAPI(double) cvePSNR(cv::_InputArray* src1, cv::_InputArray* src2);
 
@@ -280,4 +284,6 @@ CVAPI(void) cveRngRelease(cv::RNG** rng);
 
 CVAPI(cv::Moments*) cveMomentsCreate();
 CVAPI(void) cveMomentsRelease(cv::Moments** moments);
+
+CVAPI(void) cveGetConfigDict(std::vector<cv::String>* key, std::vector<double>* value);
 #endif
